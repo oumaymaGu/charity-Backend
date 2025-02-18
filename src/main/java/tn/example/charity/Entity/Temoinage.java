@@ -1,5 +1,6 @@
 package tn.example.charity.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,6 +18,7 @@ public class Temoinage {
     private long idTemoin;
     private String description;
     @ManyToMany(mappedBy = "temoinnages",cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Event> events;
 
 }
