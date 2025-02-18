@@ -1,5 +1,6 @@
 package tn.example.charity.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,11 +24,13 @@ public class Event {
         private String lieu;
         private float prixevent;
         private Date dateEvent;
-
+        @JsonIgnore
         @OneToMany(cascade = CascadeType.ALL)
         private List<Logestique > logestiques;
+        @JsonIgnore
         @ManyToMany(cascade = CascadeType.ALL)
         private Set<Temoinage> temoinnages;
+        @JsonIgnore
         @ManyToOne(cascade = CascadeType.ALL)
         private Associations association;
     }
