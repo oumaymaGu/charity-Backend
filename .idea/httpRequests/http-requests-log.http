@@ -1,0 +1,49 @@
+PUT http://localhost:8089/charity/livraison/modifyLivraison
+Content-Type: application/json
+Content-Length: 105
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2024.2.4
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "idLivr": 0,
+  "nom": "",
+  "adresseLivr": "",
+  "dateLivraison": "",
+  "etatLivraisons": "ENCOURS"
+}
+
+<> 2025-02-18T131641.500.json
+
+###
+
+PUT http://localhost:8089/charity/livraison/modifyLivraison
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2024.2.4
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+content-length: 0
+
+<> 2025-02-18T111600.400.json
+
+###
+
+POST http://localhost:8089/charity/temoinage/add-temoinage
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2024.2.4
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+content-length: 0
+
+<> 2025-02-18T111457.400.json
+
+###
+
+GET http://localhost:8089/charity/livraison/retrieve-all-Livraison
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2024.2.4
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+content-length: 0
+
+<> 2025-02-18T111423.500.json
+
+###
+
