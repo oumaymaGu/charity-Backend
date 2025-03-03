@@ -1,4 +1,4 @@
-package com.whitecape.flayes.exception;
+package tn.example.charity.exception;
 
 public class BadRequestException extends RuntimeException {
 

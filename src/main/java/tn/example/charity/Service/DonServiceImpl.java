@@ -13,17 +13,19 @@ import java.util.List;
 @Slf4j
 
 public class DonServiceImpl implements IDonService {
+
     DonRepository donRepository;
 
     @Override
     public Don addDon(Don don) {
+
         return donRepository.save(don);
     }
+
 
     @Override
     public void deleteDon(Long idDon) {
         donRepository.deleteById(idDon);
-
     }
 
     @Override
@@ -34,7 +36,6 @@ public class DonServiceImpl implements IDonService {
 
     @Override
     public List<Don> getAllDon() {
-
         return donRepository.findAll();
     }
 
@@ -46,7 +47,6 @@ public class DonServiceImpl implements IDonService {
 
     @Override
     public Don retrieveallDonbyid(Long idDon) {
-
-        return donRepository.findById(idDon).get();
+        return donRepository.findById(idDon).orElse(null);
     }
 }
