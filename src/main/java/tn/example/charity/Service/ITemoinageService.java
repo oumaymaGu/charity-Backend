@@ -1,15 +1,12 @@
 package tn.example.charity.Service;
 
-import tn.example.charity.Entity.Livraisons;
 import tn.example.charity.Entity.Temoinage;
-
 import java.util.List;
 
 public interface ITemoinageService {
-    Temoinage addTemoinage(Temoinage Temoinage);
-    void deleteTemoinage(Long idtemoinage);
+    Temoinage addTemoinage(Temoinage temoinage);
+    void deleteTemoinage(Long idTemoin);
     Temoinage modifyTemoinage(Temoinage temoinage);
-    List<Temoinage> getAllTemoingage();
-    List<Temoinage> retreiveallTemoignage(Temoinage temoignage);
-    Temoinage retrieveallTemoignagebyid(Long idTemoinage);
+    List<Temoinage> getAllTemoinages();
+    Temoinage getTemoinageById(Long idTemoin);
 }
