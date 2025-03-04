@@ -1,4 +1,4 @@
-package com.whitecape.flayes.dto;
+package tn.example.charity.dto;
 
 import java.util.List;
 

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.nio.file.FileStore;
 
 @Setter
 @Getter
@@ -20,11 +21,27 @@ public class URole {
 
 
 
+    public URole() {
+
+    }
+
     public URole(Role role) {
         this.role = role;
     }
 
-    public URole() {
+    public Integer getId() {
+        return id;
+    }
 
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

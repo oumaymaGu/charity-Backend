@@ -1,4 +1,4 @@
-package com.whitecape.flayes.dto;
+package tn.example.charity.dto;
 
 import javax.validation.constraints.NotBlank;
 

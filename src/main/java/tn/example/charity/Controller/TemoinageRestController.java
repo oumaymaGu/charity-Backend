@@ -3,15 +3,14 @@ package tn.example.charity.Controller;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import tn.example.charity.Entity.Don;
 import tn.example.charity.Entity.Temoinage;
-import tn.example.charity.Service.IDonService;
 import tn.example.charity.Service.ITemoinageService;
 
 import java.util.List;
 
 @RestController
 @AllArgsConstructor
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/temoinage")
 public class TemoinageRestController {
     @Autowired
@@ -19,33 +18,26 @@ public class TemoinageRestController {
 
     @PostMapping("/add-temoinage")
     public Temoinage addTemoinage(@RequestBody Temoinage t) {
-        Temoinage temoinage = temoinageService.addTemoinage(t);
-        return temoinage;
+        return temoinageService.addTemoinage(t);
     }
 
     @DeleteMapping("/remove-temoinage/{temoinage-id}")
-    public void removeTemoinage(@PathVariable("temoinage-id")Long temoinage) {
-
-        temoinageService.deleteTemoinage(temoinage);
+    public void removeTemoinage(@PathVariable("temoinage-id") Long temoinageId) {
+        temoinageService.deleteTemoinage(temoinageId);
     }
 
-
-    @PutMapping("/modifyTemoinage")
+    @PutMapping("/modify-temoinage")
     public Temoinage modifyTemoinage(@RequestBody Temoinage t) {
-        Temoinage temoinage = temoinageService.modifyTemoinage(t);
-        return temoinage;
+        return temoinageService.modifyTemoinage(t);
     }
-    @GetMapping("/retrieve-all-Temoinages")
 
-    public List<Temoinage> getTemoinages() {
-        List<Temoinage> listTemoinages = temoinageService.getAllTemoingage();
-        return listTemoinages;
-
+    @GetMapping("/retrieve-all-temoinages")
+    public List<Temoinage> getAllTemoinages() {
+        return temoinageService.getAllTemoinages();
     }
 
     @GetMapping("/get-temoinage/{temoinage-id}")
-    public Temoinage gettemoinage(@PathVariable("temoinage-id")  Long t) {
-        Temoinage temoinage= temoinageService.retrieveallTemoignagebyid(t);
-        return temoinage;
+    public Temoinage getTemoinage(@PathVariable("temoinage-id") Long id) {
+        return temoinageService.getTemoinageById(id);
     }
 }

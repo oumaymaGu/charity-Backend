@@ -1,4 +1,4 @@
-package com.whitecape.flayes.config.exception;
+package tn.example.charity.config.exception;
 
 import java.util.List;
 

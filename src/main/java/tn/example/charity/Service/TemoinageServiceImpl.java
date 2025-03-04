@@ -7,32 +7,36 @@ import tn.example.charity.Entity.Temoinage;
 import tn.example.charity.Repository.TemoinageRepository;
 
 import java.util.List;
+import java.util.Optional;
+
 @Service
 @AllArgsConstructor
 @Slf4j
 public class TemoinageServiceImpl implements ITemoinageService {
-    TemoinageRepository temoinageRepository;
+    private final TemoinageRepository temoinageRepository;
+
+    @Override
     public Temoinage addTemoinage(Temoinage temoinage) {
         return temoinageRepository.save(temoinage);
     }
 
-    public void deleteTemoinage(Long idtemoinage) {
-        temoinageRepository.deleteById(idtemoinage);
+    @Override
+    public void deleteTemoinage(Long idTemoin) {
+        temoinageRepository.deleteById(idTemoin);
     }
 
+    @Override
     public Temoinage modifyTemoinage(Temoinage temoinage) {
         return temoinageRepository.save(temoinage);
     }
 
-    public List<Temoinage> getAllTemoingage() {
+    @Override
+    public List<Temoinage> getAllTemoinages() {
         return temoinageRepository.findAll();
     }
 
-    public List<Temoinage> retreiveallTemoignage(Temoinage temoignage) {
-        return List.of();
-    }
-
-    public Temoinage retrieveallTemoignagebyid(Long idTemoinage) {
-        return temoinageRepository.findById(idTemoinage).get();
+    @Override
+    public Temoinage getTemoinageById(Long idTemoin) {
+        return temoinageRepository.findById(idTemoin).orElse(null);
     }
 }
