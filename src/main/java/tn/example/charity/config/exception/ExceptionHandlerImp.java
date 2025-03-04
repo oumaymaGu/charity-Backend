@@ -1,4 +1,4 @@
-package com.whitecape.flayes.config.exception;
+package tn.example.charity.config.exception;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import com.whitecape.flayes.exception.BadRequestException;
-import com.whitecape.flayes.exception.NotFoundException;
-import com.whitecape.flayes.exception.UnauthorisedException;
+import tn.example.charity.exception.BadRequestException;
+import tn.example.charity.exception.NotFoundException;
+import tn.example.charity.exception.UnauthorisedException;
 
 @ControllerAdvice
 public class ExceptionHandlerImp extends ResponseEntityExceptionHandler {

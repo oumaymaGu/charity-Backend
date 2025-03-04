@@ -1,5 +1,5 @@
 
-package com.whitecape.flayes.config;
+package tn.example.charity.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -17,9 +17,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.whitecape.flayes.Security.AuthEntryPointJwt;
-import com.whitecape.flayes.Security.AuthTokenFilter;
-import com.whitecape.flayes.services.UserDetailsServiceImpl;
+import tn.example.charity.Security.AuthEntryPointJwt;
+import tn.example.charity.Security.AuthTokenFilter;
+import tn.example.charity.Service.UserDetailsServiceImpl;
 
 @Configuration
 @EnableWebSecurity
@@ -46,8 +46,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
 
-		// authenticationManagerBuilder.inMemoryAuthentication().withUser("achref_hamzaoui")
-		// .password(passwordEncoder().encode("achref_hamzaoui")).roles("ADMIN").authorities("XXXX","YYYYY");
+
 		authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
 	}
 
@@ -62,20 +61,21 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return new BCryptPasswordEncoder();
 	}
 
+
+
+
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.cors().and().csrf().disable().exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
-				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().authorizeRequests()
-				.antMatchers("/api/auth/**").permitAll().antMatchers("/**/**/**")
-				.hasAnyRole("ADMIN", "FREELANCER", "CLIENT").antMatchers("/**/**").permitAll().antMatchers("/domain/**")
-				.permitAll().antMatchers("/skill/**/**").hasRole("ADMIN").antMatchers("/announcement/**/**").permitAll()
-				.antMatchers("/subdomain/**/**").hasRole("ADMIN").antMatchers("/FreelancerProfil/**/**")
-				.hasRole("ADMIN").antMatchers("/Education/**/**").hasRole("ADMIN").antMatchers("/Experience/**/**")
-				.hasRole("ADMIN").antMatchers("/**/**/**").permitAll()
-				
-				// .antMatchers("/skill/add").hasAuthority("XXXX")
-				// .antMatchers("/skill/add").hasAuthority("YYYY")
-				.anyRequest().authenticated();
+		http.cors().and().csrf().disable()
+				.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authorizeHttpRequests(auth -> auth
+						.antMatchers("/api/auth/**").permitAll()
+						.antMatchers("/**/**/**").permitAll()
+						.anyRequest().authenticated()
+				);
+
 		http.sessionManagement()
         .maximumSessions(1) // Configurez le nombre maximal de sessions par utilisateur selon vos besoins
         .sessionRegistry(sessionRegistry()); // Assurez-vous de référencer le bean SessionRegistry dans votre configuration
