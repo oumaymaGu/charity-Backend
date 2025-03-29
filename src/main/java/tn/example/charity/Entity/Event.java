@@ -26,6 +26,11 @@ public class Event {
     private String lieu;
     private float prixevent;
     private Date dateEvent;
+    private String weatherDescription;
+    private Double temperature;
+    private Double latitude;
+    private Double longitude;
+
     @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL)
     private List<Logestique> logestiques;

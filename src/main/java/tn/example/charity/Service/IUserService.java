@@ -20,4 +20,5 @@ public interface IUserService {
     User affecterUserToEvent(Long idUser, Long eventId);
     User findByResetToken(String resetToken);
     User getUserIdByEmail (String email);
+    User deaffecterUserFromEventByEmail (Long eventId, String email);
 }

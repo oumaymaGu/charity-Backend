@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "*")
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/auth")
@@ -181,6 +181,11 @@ public class UserRestController {
     public User assignUserToEvent(@PathVariable("User-id") Long UserId,
                                   @PathVariable("Event-id") Long EventId) {
         return userService.affecterUserToEvent(UserId, EventId);
+    }
+    @DeleteMapping("/deaffecter-user-from-event/{email}/{event-id}")
+    public User deassignUserFromEvent(@PathVariable("email") String email,
+                                      @PathVariable("event-id") Long eventId) {
+        return userService.deaffecterUserFromEventByEmail(eventId, email);
     }
 
     @GetMapping("/getUserIdByEmail")

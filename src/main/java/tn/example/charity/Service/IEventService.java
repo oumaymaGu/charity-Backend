@@ -14,6 +14,6 @@ public interface IEventService {
     Event retrieveEventbyid(Long idEevent);
     List<Event> getEventByName(String eventName);
     List<User>getUsersByEventId(Long eventId);
-
+    List<Event> getEventsNear(Double latitude, Double longitude, double radius);
 }
 

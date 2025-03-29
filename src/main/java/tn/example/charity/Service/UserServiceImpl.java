@@ -87,5 +87,19 @@ public class UserServiceImpl implements IUserService{
         return userRepository.findByEmail(email);
     }
 
+    @Override
+    public User deaffecterUserFromEventByEmail(Long eventId, String email) {
+        User user = userRepository.findByEmail(email);
+        Event event = eventRepository.findById(eventId).get();
+        if (user.getEvents().contains(event)) {
+            user.getEvents().remove(event);
+            return userRepository.save(user);
+        } else {
+            // Si l'utilisateur n'est pas associé à l'événement, tu peux retourner une erreur ou un message
+            throw new RuntimeException("L'utilisateur n'est pas associé à cet événement.");
+        }
+
+    }
+
 
 }
