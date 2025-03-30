@@ -1,7 +1,6 @@
 package tn.example.charity.dto;
 
 import lombok.*;
-
 import javax.validation.constraints.*;
 
 @Data
@@ -9,7 +8,6 @@ import javax.validation.constraints.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StripePaymentRequest {
-
     @Positive(message = "Le montant doit être positif")
     @NotNull(message = "Le montant ne peut pas être nul")
     private Double amount;
@@ -26,8 +24,7 @@ public class StripePaymentRequest {
     @Size(max = 500, message = "La description ne peut pas dépasser 500 caractères")
     private String description;
 
-    @NotNull(message = "L'ID du don ne peut pas être nul")
-    @Positive(message = "L'ID du don doit être positif")
+    // Supprimez la validation @NotNull pour donId
     private Long donId;
 
     public long getAmountInCents() {
