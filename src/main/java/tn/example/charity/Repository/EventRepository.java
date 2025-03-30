@@ -22,7 +22,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findEventsNear(@Param("userLat") double userLat,
                                @Param("userLon") double userLon,
                                @Param("radius") double radius);
-
-
-
 }
+
+
+

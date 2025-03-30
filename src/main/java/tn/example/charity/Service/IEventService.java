@@ -16,4 +16,3 @@ public interface IEventService {
     List<User>getUsersByEventId(Long eventId);
     List<Event> getEventsNear(Double latitude, Double longitude, double radius);
 }
-

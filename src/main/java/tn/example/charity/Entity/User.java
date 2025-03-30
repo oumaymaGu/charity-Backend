@@ -6,11 +6,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
+import lombok.*;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 @Getter
 @Setter
+
 @Entity
 @Data
 @Table(name = "users", uniqueConstraints = { @UniqueConstraint(columnNames = "username"),
@@ -23,6 +27,7 @@ public class User {
     private String username;
     private String password;
 
+    @Email
     private String email;
     @Lob
     private String resetToken;
