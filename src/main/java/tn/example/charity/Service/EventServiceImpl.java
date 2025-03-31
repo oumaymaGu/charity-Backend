@@ -64,6 +64,7 @@ public class EventServiceImpl implements IEventService {
         return eventRepository.save(event);
     }
 
+
     @Override
     public List<Event> getAllEvents() {
         return eventRepository.findAll();

@@ -30,6 +30,7 @@ public class Event {
     private Double temperature;
     private Double latitude;
     private Double longitude;
+    private String photoEvent;
 
     @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL)
