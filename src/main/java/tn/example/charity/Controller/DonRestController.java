@@ -1,6 +1,7 @@
 package tn.example.charity.Controller;
 
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -8,6 +9,8 @@ import tn.example.charity.Entity.Don;
 import tn.example.charity.Entity.TypeDon;
 import tn.example.charity.Service.IDonService;
 import tn.example.charity.Service.NotificationService;
+import tn.example.charity.Service.OcrService;
+import tn.example.charity.dto.MedicationInfo;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,6 +31,7 @@ public class DonRestController {
     private final IDonService donService;
     private final NotificationService notificationService; // Ajout
     private static final String UPLOAD_DIRECTORY = "uploads/";
+    private final OcrService ocrService;
 
     @PostMapping("/add")
     public ResponseEntity<Don> addDon(@RequestBody Don d) {
@@ -35,7 +39,31 @@ public class DonRestController {
         notificationService.createAndSendDonNotification(savedDon); // Utilisez la nouvelle méthode
         return ResponseEntity.ok(savedDon);
     }
-    
+    @PostMapping("/add-with-medication")
+    public ResponseEntity<?> addDonWithMedication(
+            @RequestPart("don") Don don,
+            @RequestPart(value = "medicationImage", required = false) MultipartFile medicationImage) {
+
+        try {
+            if (don.getTypeDon() == TypeDon.MATERIEL && medicationImage != null) {
+                MedicationInfo info = ocrService.extractMedicationInfo(medicationImage);
+                // Mapper les infos du médicament vers le don
+                don.setMedicationName(info.getMedicationName());
+                don.setLotNumber(info.getLotNumber());
+                don.setExpirationDate(info.getExpirationDate());
+                don.setProductCode(info.getProductCode());
+            }
+
+            Don savedDon = donService.addDon(don);
+            return ResponseEntity.ok(savedDon);
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur lors du scan du médicament: " + e.getMessage());
+        }
+    }
+
+
 
 
     @PostMapping("/upload-photo")

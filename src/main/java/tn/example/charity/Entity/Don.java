@@ -22,6 +22,11 @@ public class Don {
     private String donorContact; // Contact du donneur
     private double amount;
     private String category;
+    private String medicationName;
+    private String lotNumber;
+    private String expirationDate;
+
+    private String productCode;
     @Enumerated(EnumType.STRING)
     private TypeDon typeDon; // ARGENT ou MATERIELr
 
