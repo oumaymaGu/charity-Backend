@@ -22,11 +22,19 @@ public class Don {
     private String donorContact; // Contact du donneur
     private double amount;
     private String category;
+    @Column(nullable = true) // Autorise NULL si le champ n'est pas toujours rempli
     private String medicationName;
+
+    @Column(nullable = true)
     private String lotNumber;
+
+    @Column(nullable = true)
     private String expirationDate;
 
+    @Column(nullable = true)
     private String productCode;
+
+
     @Enumerated(EnumType.STRING)
     private TypeDon typeDon; // ARGENT ou MATERIELr
 

@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-public class OcrService {
+public class OcrService implements IOcrService {
     private static final String API_URL = "https://api.ocr.space/parse/image";
     private static final String API_KEY = "helloworld";
 
@@ -171,8 +171,8 @@ public class OcrService {
 
         // 🔁 Configuration du RestTemplate avec timeout
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(10000); // 10 secondes
-        requestFactory.setReadTimeout(30000);      // 10 secondes
+        requestFactory.setConnectTimeout(30000); // 30 secondes
+        requestFactory.setReadTimeout(60000);      // 60 secondes
 
         RestTemplate restTemplate = new RestTemplate(requestFactory);
 
@@ -201,4 +201,5 @@ public class OcrService {
                 .replaceAll("\\s+", " ")
                 .trim();
     }
+
 }

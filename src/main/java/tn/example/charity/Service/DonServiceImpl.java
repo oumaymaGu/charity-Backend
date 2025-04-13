@@ -6,12 +6,13 @@ import org.springframework.stereotype.Service;
 import tn.example.charity.Entity.Don;
 import tn.example.charity.Repository.DonRepository;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 @Service
 @AllArgsConstructor
 @Slf4j
-
+@Transactional
 public class DonServiceImpl implements IDonService {
 
     DonRepository donRepository;

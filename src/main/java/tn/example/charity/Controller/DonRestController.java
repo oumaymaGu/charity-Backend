@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import tn.example.charity.Entity.Don;
 import tn.example.charity.Entity.TypeDon;
 import tn.example.charity.Service.IDonService;
+import tn.example.charity.Service.IOcrService;
 import tn.example.charity.Service.NotificationService;
 import tn.example.charity.Service.OcrService;
 import tn.example.charity.dto.MedicationInfo;
@@ -31,7 +32,7 @@ public class DonRestController {
     private final IDonService donService;
     private final NotificationService notificationService; // Ajout
     private static final String UPLOAD_DIRECTORY = "uploads/";
-    private final OcrService ocrService;
+    private final IOcrService ocrService;
 
     @PostMapping("/add")
     public ResponseEntity<Don> addDon(@RequestBody Don d) {
@@ -43,11 +44,24 @@ public class DonRestController {
     public ResponseEntity<?> addDonWithMedication(
             @RequestPart("don") Don don,
             @RequestPart(value = "medicationImage", required = false) MultipartFile medicationImage) {
-
         try {
-            if (don.getTypeDon() == TypeDon.MATERIEL && medicationImage != null) {
+            // Gérer l'upload de la photo
+            String photoUrl = null;
+            if (medicationImage != null && !medicationImage.isEmpty()) {
+                Path uploadPath = Paths.get(UPLOAD_DIRECTORY);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                String fileName = System.currentTimeMillis() + "_" + medicationImage.getOriginalFilename();
+                Path filePath = uploadPath.resolve(fileName);
+                Files.write(filePath, medicationImage.getBytes());
+                photoUrl = "http://localhost:8089/uploads/" + fileName;
+                don.setPhotoUrl(photoUrl);
+            }
+
+            // Extraire les informations OCR si c'est un don matériel de type MEDICAMENT
+            if (don.getTypeDon() == TypeDon.MATERIEL && don.getCategory().equals("MEDICAMENT") && medicationImage != null) {
                 MedicationInfo info = ocrService.extractMedicationInfo(medicationImage);
-                // Mapper les infos du médicament vers le don
                 don.setMedicationName(info.getMedicationName());
                 don.setLotNumber(info.getLotNumber());
                 don.setExpirationDate(info.getExpirationDate());
@@ -55,11 +69,11 @@ public class DonRestController {
             }
 
             Don savedDon = donService.addDon(don);
+            notificationService.createAndSendDonNotification(savedDon);
             return ResponseEntity.ok(savedDon);
-
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erreur lors du scan du médicament: " + e.getMessage());
+                    .body("Erreur lors du traitement: " + e.getMessage());
         }
     }
 
