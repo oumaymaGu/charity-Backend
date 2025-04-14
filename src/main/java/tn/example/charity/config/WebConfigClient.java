@@ -2,21 +2,18 @@ package tn.example.charity.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.netty.http.client.HttpClient;
-
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.RestTemplate;
 import java.time.Duration;
 
 @Configuration
 public class WebConfigClient {
+
     @Bean
-    public WebClient webClient() {
-        return WebClient.builder()
-                .clientConnector(new ReactorClientHttpConnector(
-                        HttpClient.create()
-                                .responseTimeout(Duration.ofSeconds(60))
-                ))
-                .build();
+    public RestTemplate restTemplate() {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(60000); // 60 secondes
+        requestFactory.setReadTimeout(120000);   // 120 secondes
+        return new RestTemplate(requestFactory);
     }
 }

@@ -45,8 +45,7 @@ public class DonRestController {
             @RequestPart("don") Don don,
             @RequestPart(value = "medicationImage", required = false) MultipartFile medicationImage) {
         try {
-            // Gérer l'upload de la photo
-            String photoUrl = null;
+            // 📸 Upload de la photo
             if (medicationImage != null && !medicationImage.isEmpty()) {
                 Path uploadPath = Paths.get(UPLOAD_DIRECTORY);
                 if (!Files.exists(uploadPath)) {
@@ -55,27 +54,45 @@ public class DonRestController {
                 String fileName = System.currentTimeMillis() + "_" + medicationImage.getOriginalFilename();
                 Path filePath = uploadPath.resolve(fileName);
                 Files.write(filePath, medicationImage.getBytes());
-                photoUrl = "http://localhost:8089/uploads/" + fileName;
+                String photoUrl = "http://localhost:8089/uploads/" + fileName;
                 don.setPhotoUrl(photoUrl);
             }
 
-            // Extraire les informations OCR si c'est un don matériel de type MEDICAMENT
-            if (don.getTypeDon() == TypeDon.MATERIEL && don.getCategory().equals("MEDICAMENT") && medicationImage != null) {
-                MedicationInfo info = ocrService.extractMedicationInfo(medicationImage);
-                don.setMedicationName(info.getMedicationName());
-                don.setLotNumber(info.getLotNumber());
-                don.setExpirationDate(info.getExpirationDate());
-                don.setProductCode(info.getProductCode());
-            }
+            // 💊 Traitement OCR pour les dons matériels de type médicament
+            if (don.getTypeDon() == TypeDon.MATERIEL
+                    && "MEDICAMENT".equalsIgnoreCase(don.getCategory())
+                    && medicationImage != null
+                    && !medicationImage.isEmpty()) {
 
+                MedicationInfo info = ocrService.extractMedicationInfo(medicationImage);
+                if (info != null) {
+                    if (info.getMedicationName() != null) don.setMedicationName(info.getMedicationName());
+                    if (info.getLotNumber() != null) don.setLotNumber(info.getLotNumber());
+                    if (info.getExpirationDate() != null) don.setExpirationDate(info.getExpirationDate());
+                    if (info.getFabricationDate() != null) don.setFabricationDate(info.getFabricationDate()); // 👈 NEW
+                    if (info.getProductCode() != null) don.setProductCode(info.getProductCode());
+                } else {
+                    return ResponseEntity
+                            .status(HttpStatus.BAD_REQUEST)
+                            .body("Échec de l'extraction OCR : aucune information trouvée.");
+                }
+            }
+            // ✅ Sauvegarde du don
             Don savedDon = donService.addDon(don);
             notificationService.createAndSendDonNotification(savedDon);
             return ResponseEntity.ok(savedDon);
+
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erreur lors du traitement: " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur lors de l'upload de l'image : " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur inattendue : " + e.getMessage());
         }
     }
+
 
 
 

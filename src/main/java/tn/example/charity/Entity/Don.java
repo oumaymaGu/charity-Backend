@@ -27,6 +27,8 @@ public class Don {
 
     @Column(nullable = true)
     private String lotNumber;
+    @Column(nullable = true)
+    private String fabricationDate;
 
     @Column(nullable = true)
     private String expirationDate;
