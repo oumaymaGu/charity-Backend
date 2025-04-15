@@ -30,6 +30,8 @@ public class JwtUtils {
 	public String generateJwtToken(Authentication authentication) {
 
 		UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
+		System.err.println(new Date((new Date()).getTime() + jwtExpirationMs));
+		System.err.println(new Date((new Date()).getTime() + jwtExpirationMs));
 
 		return Jwts.builder().setSubject((userPrincipal.getUsername())).setIssuedAt(new Date())
 				.setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
