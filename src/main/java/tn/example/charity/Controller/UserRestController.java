@@ -178,7 +178,7 @@ public class UserRestController {
     }
     @PutMapping("/affecter-user-to-event/{User-id}/{Event-id}")
     public User assignUserToEvent(@PathVariable("User-id") Long UserId,
-                                  @PathVariable("Event-id") Long EventId) {
+                                  @PathVariable("Event-id") Long EventId) throws Exception {
         return userService.affecterUserToEvent(UserId, EventId);
     }
     @DeleteMapping("/deaffecter-user-from-event/{email}/{event-id}")

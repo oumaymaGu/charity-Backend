@@ -2,7 +2,6 @@ package tn.example.charity.Controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,6 +9,7 @@ import tn.example.charity.Entity.Event;
 import tn.example.charity.Entity.User;
 import tn.example.charity.Repository.EventRepository;
 import tn.example.charity.Service.IEventService;
+import tn.example.charity.dto.BilletDTO; // ⚠️ Assure-toi d’avoir ce DTO dans ce package
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,10 +20,11 @@ import java.util.List;
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/event")
-
 public class EventRestController {
+
     @Autowired
     private IEventService eventService;
+
     @Autowired
     private EventRepository eventRepository;
 
@@ -32,23 +33,17 @@ public class EventRestController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("event") String eventJson) throws IOException {
 
-        // Convert JSON string to Event object
         ObjectMapper objectMapper = new ObjectMapper();
         Event event = objectMapper.readValue(eventJson, Event.class);
 
-        // Save the image file
         String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
         Path filePath = Paths.get("uploads/" + fileName);
         Files.createDirectories(filePath.getParent());
         Files.write(filePath, file.getBytes());
 
-        // Assign image URL to the event
         event.setPhotoEvent("http://localhost:8089/uploads/" + fileName);
-
-        // Save the event using the service
         Event savedEvent = eventService.addevent(event);
 
-        // Return the saved event with ResponseEntity
         return ResponseEntity.ok(savedEvent);
     }
 
@@ -57,25 +52,19 @@ public class EventRestController {
         eventService.deleteEvent(idEvent);
     }
 
-
     @PutMapping("/modifyEvent")
     public Event modifyEvent(@RequestBody Event e) {
-        Event event = eventService.modifyEvent(e);
-        return event;
+        return eventService.modifyEvent(e);
     }
 
     @GetMapping("/retrieve-all-Events")
-
     public List<Event> getEvents() {
-        List<Event> listEvents = eventService.getAllEvents();
-        return listEvents;
-
+        return eventService.getAllEvents();
     }
 
     @GetMapping("/get-event/{event-id}")
     public Event getevent(@PathVariable("event-id") Long e) {
-        Event event = eventService.retrieveEventbyid(e);
-        return event;
+        return eventService.retrieveEventbyid(e);
     }
 
     @GetMapping("/findByName")
@@ -88,6 +77,7 @@ public class EventRestController {
         List<User> users = eventService.getUsersByEventId(eventId);
         return ResponseEntity.ok(users);
     }
+
     @GetMapping("/nearby")
     public List<Event> getEventsNear(
             @RequestParam double latitude,
@@ -95,5 +85,16 @@ public class EventRestController {
             @RequestParam(defaultValue = "50") double radius) {
         return eventService.getEventsNear(latitude, longitude, radius);
     }
-}
 
+    @GetMapping("/with-logestiques")
+    public List<Event> getEventsWithLogestiques() {
+        return eventRepository.findAll();
+    }
+
+    // 🔥 NOUVEAU : Génération du billet avec QR Code
+    @GetMapping("/billet/{eventId}/{userId}")
+    public ResponseEntity<BilletDTO> getBillet(@PathVariable Long eventId, @PathVariable Long userId) throws Exception {
+        BilletDTO billet = eventService.generateBillet(eventId, userId);
+        return ResponseEntity.ok(billet);
+    }
+}

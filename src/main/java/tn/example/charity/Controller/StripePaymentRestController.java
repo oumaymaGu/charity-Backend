@@ -19,7 +19,7 @@ import java.util.Map;
 @AllArgsConstructor
 @RestController
 @RequestMapping("/api/stripe-payments")
-@CrossOrigin(origins = {"*"})
+@CrossOrigin(origins = "http://localhost:4200")
 public class StripePaymentRestController {
 
     private final IStripePaymentService stripePaymentService;

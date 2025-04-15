@@ -1,24 +1,28 @@
-package tn.example.charity.Entity;
+    package tn.example.charity.Entity;
 
 
-import lombok.*;
+    import com.fasterxml.jackson.annotation.JsonIgnore;
+    import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+    import javax.persistence.*;
 
-@Entity
-@Getter
-@Setter
-@ToString
-@NoArgsConstructor
-@AllArgsConstructor
-public class Logestique {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long idlogestique;
-    private String ressourceName;
-    private float quantity;
+    @Entity
+    @Getter
+    @Setter
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public class Logestique {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private long idlogestique;
+        private String ressourceName;
+        private float quantity;
+        @ManyToOne
+        @JoinColumn(name = "event_id")
+        @JsonIgnore
+        private Event event;
 
-}
+
+
+    }

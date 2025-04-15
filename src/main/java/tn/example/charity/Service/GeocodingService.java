@@ -8,7 +8,7 @@ import org.json.JSONObject;
 @Service
 public class GeocodingService {
 
-    private final String API_KEY = "774a8d49846541c1bd53147aa2dc74f7"; // Remplace par ta clé OpenCage
+    private final String API_KEY = "774a8d49846541c1bd53147aa2dc74f7";
 
     public double[] getCoordinates(String city) {
         String url = UriComponentsBuilder.fromHttpUrl("https://api.opencagedata.com/geocode/v1/json")

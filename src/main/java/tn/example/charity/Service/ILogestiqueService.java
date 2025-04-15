@@ -11,5 +11,7 @@ public interface ILogestiqueService {
     List<Logestique> getAlllogs();
     Logestique retrievelogbyid(Long idlogestique);
     List<Logestique> retrievelogbyname(String name);
+    Logestique assignLogestiqueToEvent(Long idlogestique, Long Idevent);
+
 
 }

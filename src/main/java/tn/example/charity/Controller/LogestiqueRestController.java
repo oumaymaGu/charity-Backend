@@ -2,6 +2,7 @@ package tn.example.charity.Controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.example.charity.Entity.Logestique;
 import tn.example.charity.Service.ILogestiqueService;
@@ -50,5 +51,13 @@ public class LogestiqueRestController {
     public List<Logestique> findByRessourceName(@RequestParam String ressourceName) {
         return logestiqueService.retrievelogbyname(ressourceName);
     }
+    @PostMapping("/{idlogestique}/assign-to-event/{idEvent}")
+    public ResponseEntity<Logestique> assignLogToEvent(
+            @PathVariable("idlogestique") Long idlogestique,
+            @PathVariable("idEvent") Long idEvent) {
+        return ResponseEntity.ok(logestiqueService.assignLogestiqueToEvent(idlogestique, idEvent));
+    }
+
+
 
 }

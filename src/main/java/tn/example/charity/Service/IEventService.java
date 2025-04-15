@@ -2,6 +2,7 @@ package tn.example.charity.Service;
 
 import tn.example.charity.Entity.Event;
 import tn.example.charity.Entity.User;
+import tn.example.charity.dto.BilletDTO;
 
 
 import java.util.List;
@@ -15,4 +16,6 @@ public interface IEventService {
     List<Event> getEventByName(String eventName);
     List<User>getUsersByEventId(Long eventId);
     List<Event> getEventsNear(Double latitude, Double longitude, double radius);
+    List<Event> getEventsWithLogestiques();
+    BilletDTO generateBillet(Long eventId, Long userId) throws Exception;
 }

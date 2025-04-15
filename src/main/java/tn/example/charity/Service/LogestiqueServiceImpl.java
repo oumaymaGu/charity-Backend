@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tn.example.charity.Entity.Logestique;
+import tn.example.charity.Repository.EventRepository;
 import tn.example.charity.Repository.LogestiqueRepository;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 public class LogestiqueServiceImpl implements  ILogestiqueService{
     @Autowired
     private LogestiqueRepository logestiqueRepository;
+    private EventRepository eventRepository;
 
     @Override
     public Logestique addlogestique(Logestique logestique) {
@@ -43,5 +45,17 @@ public class LogestiqueServiceImpl implements  ILogestiqueService{
     }
     public List<Logestique> retrievelogbyname(String ressourceName) {
         return logestiqueRepository.findByRessourceName(ressourceName);
+    }
+
+    @Override
+    public Logestique assignLogestiqueToEvent(Long idlogestique, Long eventId) {
+        Logestique logestique = logestiqueRepository.findById(idlogestique)
+                .orElseThrow(() -> new RuntimeException("Logestique not found"));
+
+        tn.example.charity.Entity.Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        logestique.setEvent(event);
+        return logestiqueRepository.save(logestique);
     }
 }

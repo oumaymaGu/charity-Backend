@@ -32,9 +32,10 @@ public class Event {
     private Double longitude;
     private String photoEvent;
 
-    @JsonIgnore
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Logestique> logestiques;
+
+
     @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
     private Set<Temoinage> temoinnages;
