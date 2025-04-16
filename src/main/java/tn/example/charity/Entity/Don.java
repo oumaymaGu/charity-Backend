@@ -18,27 +18,27 @@ public class Don {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long idDon;
     private Date dateDon;
-    private String photoUrl; // URL de la photo uploadée
-    private String donorContact; // Contact du donneur
+    private String photoUrl;
+    private String donorContact;
     private double amount;
     private String category;
-    @Column(nullable = true) // Autorise NULL si le champ n'est pas toujours rempli
+    @Column(nullable = true)
     private String medicationName;
-
     @Column(nullable = true)
     private String lotNumber;
     @Column(nullable = true)
     private String fabricationDate;
-
     @Column(nullable = true)
     private String expirationDate;
-
     @Column(nullable = true)
     private String productCode;
-
+    @Column(nullable = true)
+    private String imageHash; // Nouveau champ pour stocker le hash de l'image
+    @Column(nullable = true)
+    private Integer quantity = 1;
 
     @Enumerated(EnumType.STRING)
-    private TypeDon typeDon; // ARGENT ou MATERIELr
+    private TypeDon typeDon;
 
     @JsonIgnore
     @OneToMany(mappedBy = "don", cascade = CascadeType.ALL)
@@ -52,5 +52,7 @@ public class Don {
     @JsonIgnore
     private Livraisons livraisons;
 
-
+    public int getSafeQuantity() {
+        return quantity != null && quantity > 0 ? quantity : 1;
+    }
 }

@@ -28,7 +28,6 @@ public class OcrService implements IOcrService {
         this.restTemplate = restTemplate;
     }
 
-    // Patterns améliorés
     private static final Pattern LOT_PATTERN = Pattern.compile("(?:Lot|LOT|N°|No|Num|Numéro)[\\s:]*([A-Z0-9]{4,})", Pattern.CASE_INSENSITIVE);
     private static final Pattern EXP_DATE_PATTERN = Pattern.compile("(?:EXP|Exp\\.|Expiration|Date exp\\.)[\\s:]*((\\d{2})[\\/](\\d{2,4}))", Pattern.CASE_INSENSITIVE);
     private static final Pattern DATE_PATTERN = Pattern.compile("\\b(\\d{2}[\\/]\\d{2}[\\/]\\d{2,4}|\\d{2}[\\/]\\d{4})\\b");
@@ -43,7 +42,10 @@ public class OcrService implements IOcrService {
 
             // Validation de la date d'expiration
             if (info.getExpirationDate() != null) {
-                info.setExpirationValid(isExpirationDateValid(info.getExpirationDate()));
+                boolean isValid = isExpirationDateValid(info.getExpirationDate());
+                info.setExpirationValid(isValid);
+            } else {
+                info.setExpirationValid(false);
             }
 
             return info;
@@ -68,7 +70,7 @@ public class OcrService implements IOcrService {
                 productCode != null ? productCode : "Non détecté",
                 fabricationDate != null ? fabricationDate : "Non détectée",
                 text,
-                false // Valeur par défaut, sera mise à jour après validation
+                false // Sera mis à jour après validation
         );
     }
 
@@ -97,19 +99,16 @@ public class OcrService implements IOcrService {
     }
 
     private String extractExpirationDate(String fullText, String[] lines) {
-        // Recherche du format EXP: MM/YYYY
         Matcher expMatcher = EXP_DATE_PATTERN.matcher(fullText);
         if (expMatcher.find()) {
             return expMatcher.group(1);
         }
 
-        // Recherche d'autres formats de date
         Matcher dateMatcher = DATE_PATTERN.matcher(fullText);
         if (dateMatcher.find()) {
             return dateMatcher.group();
         }
 
-        // Recherche dans les lignes
         for (int i = 0; i < lines.length; i++) {
             if (lines[i].matches("(?i).*Exp\\.?\\s*[:]?.*") && i + 1 < lines.length) {
                 String potentialDate = lines[i + 1].trim();
@@ -134,16 +133,14 @@ public class OcrService implements IOcrService {
 
             LocalDate expirationDate = LocalDate.of(year, month, 1)
                     .with(TemporalAdjusters.lastDayOfMonth());
-            LocalDate minValidDate = LocalDate.now().plusYears(1);
+            LocalDate currentDate = LocalDate.now();
 
-            return !expirationDate.isBefore(minValidDate);
+            // Accepter si la date d'expiration est >= date actuelle
+            return !expirationDate.isBefore(currentDate);
         } catch (Exception e) {
             return false;
         }
     }
-
-
-
 
     private String extractFabricationDate(String fullText, String[] lines) {
         Matcher matcher = FABRICATION_DATE_PATTERN.matcher(fullText);

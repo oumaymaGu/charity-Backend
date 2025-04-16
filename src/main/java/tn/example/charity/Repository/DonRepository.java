@@ -1,17 +1,13 @@
 package tn.example.charity.Repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 import tn.example.charity.Entity.Don;
-import tn.example.charity.Entity.TypeDon;
+import java.util.Optional;
 
-import java.time.LocalDateTime;
-
-@Repository
 public interface DonRepository extends JpaRepository<Don, Long> {
-    boolean existsByTypeDonAndCategoryAndDateDonAfter(
-            TypeDon typeDon,
-            String category,
-            LocalDateTime date
-    );
+    Optional<Don> findFirstByPhotoUrl(String photoUrl);
+    Optional<Don> findFirstByPhotoUrlAndCategory(String photoUrl, String category);
+    Optional<Don> findFirstByPhotoUrlAndCategoryAndMedicationNameAndLotNumber(
+            String photoUrl, String category, String medicationName, String lotNumber);
+    Optional<Don> findFirstByImageHash(String imageHash);
 }

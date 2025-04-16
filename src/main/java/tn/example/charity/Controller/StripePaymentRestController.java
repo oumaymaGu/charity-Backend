@@ -1,53 +1,31 @@
 package tn.example.charity.Controller;
 
-import com.itextpdf.text.Font;
-import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import tn.example.charity.Entity.Payment;
+import tn.example.charity.Entity.StripePayment;
 import tn.example.charity.Service.IStripePaymentService;
 import tn.example.charity.dto.StripePaymentRequest;
-import tn.example.charity.Entity.StripePayment;
 
-
-import java.awt.*;
-import java.awt.Image;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.PdfWriter;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Date;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.ByteArrayOutputStream;
-import java.util.Date;
 
 @Slf4j
 @AllArgsConstructor
@@ -104,11 +82,12 @@ public class StripePaymentRestController {
                     .body(errorResponse("SERVER_ERROR", "Failed to retrieve payments"));
         }
     }
+
     @GetMapping("/all")
     public List<StripePayment> getAllPayments() {
-
         return stripePaymentService.getAllPayment();
     }
+
     @GetMapping("/receipt/{paymentIntentId}")
     public ResponseEntity<ByteArrayResource> generateStyledReceipt(
             @PathVariable String paymentIntentId,
@@ -130,6 +109,7 @@ public class StripePaymentRestController {
             BaseColor valueColor = BaseColor.BLACK;
 
             // Fontes
+            Font organizationFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, labelColor);
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, labelColor);
             Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, labelColor);
             Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 12, valueColor);
@@ -137,8 +117,38 @@ public class StripePaymentRestController {
             Font thanksFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 12, labelColor);
             Font footerFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, BaseColor.GRAY);
 
-            // Logo
+            // En-tête : Logo et Nom de l'organisation
+            PdfPTable headerTable = new PdfPTable(2);
+            headerTable.setWidthPercentage(100);
+            headerTable.setWidths(new float[]{1f, 4f});
+            headerTable.setSpacingAfter(20f);
 
+            // Logo (Load from classpath: static/images/logo.png)
+            try {
+                ClassPathResource logoResource = new ClassPathResource("static/images/logo.png");
+                InputStream logoStream = logoResource.getInputStream();
+                byte[] logoBytes = logoStream.readAllBytes();
+                Image logo = Image.getInstance(logoBytes);
+                logo.scaleToFit(50, 50);
+                PdfPCell logoCell = new PdfPCell(logo);
+                logoCell.setBorder(Rectangle.NO_BORDER);
+                logoCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+                headerTable.addCell(logoCell);
+            } catch (Exception e) {
+                log.warn("Logo not found in classpath (static/images/logo.png), skipping logo addition: {}", e.getMessage());
+                PdfPCell emptyCell = new PdfPCell();
+                emptyCell.setBorder(Rectangle.NO_BORDER);
+                headerTable.addCell(emptyCell);
+            }
+
+            // Nom de l'organisation
+            PdfPCell orgCell = new PdfPCell(new Phrase("Charity Association", organizationFont));
+            orgCell.setBorder(Rectangle.NO_BORDER);
+            orgCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            orgCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            headerTable.addCell(orgCell);
+
+            document.add(headerTable);
 
             // Titre
             Paragraph title = new Paragraph("REÇU DE PAIEMENT", titleFont);
@@ -165,8 +175,12 @@ public class StripePaymentRestController {
             headerCell2.setBorderColor(borderColor);
             table.addCell(headerCell2);
 
+            // Formatage de la date
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
+            String formattedDate = dateFormat.format(new Date());
+
             // Lignes du tableau
-            addStyledRow(table, "Date :", new Date().toString(), labelFont, valueFont, borderColor);
+            addStyledRow(table, "Date :", formattedDate, labelFont, valueFont, borderColor);
             addStyledRow(table, "Transaction ID :", paymentIntentId, labelFont, valueFont, borderColor);
             addStyledRow(table, "Nom du client :", customerName, labelFont, valueFont, borderColor);
             addStyledRow(table, "Email :", email, labelFont, valueFont, borderColor);
@@ -183,11 +197,10 @@ public class StripePaymentRestController {
             thanks.setSpacingAfter(30f);
             document.add(thanks);
 
-
-
-            // Footer
+            // Footer avec coordonnées
             Paragraph footer = new Paragraph(
-                    "Ce reçu est généré automatiquement. Veuillez le conserver pour vos dossiers.",
+                    "Charity Association | 123 Rue de la Charité, 75000 Paris, France | contact@charity.org | +33 1 23 45 67 89\n" +
+                            "Ce reçu est généré automatiquement. Veuillez le conserver pour vos dossiers.",
                     footerFont);
             footer.setAlignment(Element.ALIGN_CENTER);
             footer.setSpacingBefore(30f);
@@ -224,25 +237,11 @@ public class StripePaymentRestController {
         table.addCell(cell2);
     }
 
-    // Méthode utilitaire pour ajouter des lignes à la table
-    private void addRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont) {
-        PdfPCell cell1 = new PdfPCell(new Phrase(label, labelFont));
-        cell1.setBorder(Rectangle.NO_BORDER);
-        table.addCell(cell1);
-
-        PdfPCell cell2 = new PdfPCell(new Phrase(value, valueFont));
-        cell2.setBorder(Rectangle.NO_BORDER);
-        table.addCell(cell2);
-    }
-
-
-
     @GetMapping("/health")
     public ResponseEntity<String> healthCheck() {
         return ResponseEntity.ok("Stripe service is operational");
     }
 
-    // Ajoutez cette méthode pour gérer les cas sans code d'erreur
     private Map<String, Object> errorResponse(String errorType, String message) {
         return errorResponse(errorType, message, null);
     }
