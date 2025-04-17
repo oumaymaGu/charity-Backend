@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @AllArgsConstructor
@@ -129,36 +130,36 @@ public class UserRestController {
 
 
     @PostMapping("/add-user")
-    public User addUser (@RequestBody User usr){
-        User user = userService.addUser(usr);
-        return user;
-    }
+        public User addUser (@RequestBody User usr){
+            User user = userService.addUser(usr);
+            return user;
+        }
 
-    @DeleteMapping("/remove-user/{user-id}")
-    public void removeUser (@PathVariable("User-id") Long user){
+        @DeleteMapping("/remove-user/{user-id}")
+        public void removeUser (@PathVariable("User-id") Long user){
 
-        userService.deleteUser(user);
-    }
+            userService.deleteUser(user);
+        }
 
 
-    @PutMapping("/modifyUser")
-    public User modifyUser (@RequestBody User usr){
-        User user = userService.modifyUser(usr);
-        return user;
-    }
-    @GetMapping("/retrieve-all-User")
+        @PutMapping("/modifyUser")
+        public User modifyUser (@RequestBody User usr){
+            User user = userService.modifyUser(usr);
+            return user;
+        }
+        @GetMapping("/retrieve-all-User")
 
-    public List<User> getUser () {
-        List<User> listUser = userService.getAllUser();
-        return listUser;
+        public List<User> getUser () {
+            List<User> listUser = userService.getAllUser();
+            return listUser;
 
-    }
+        }
 
-    @GetMapping("/get-User/{User-id}")
-    public User getUser (@PathVariable("User-id") Long usr){
-        User user = userService.retrieveallUserbyid(usr);
-        return user;
-    }
+        @GetMapping("/get-User/{User-id}")
+        public User getUser (@PathVariable("User-id") Long usr){
+            User user = userService.retrieveallUserbyid(usr);
+            return user;
+        }
 
 
     // Accessible only by ADMIN

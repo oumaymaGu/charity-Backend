@@ -3,6 +3,7 @@ package tn.example.charity.Service;
 import tn.example.charity.Entity.Don;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IDonService {
 
@@ -12,4 +13,5 @@ public interface IDonService {
         List<Don> getAllDon();
         List<Don> retreiveallDon(Don don);
         Don retrieveallDonbyid(Long idDon);
+        Optional<Don> findByImageHash(String imageHash);
 }

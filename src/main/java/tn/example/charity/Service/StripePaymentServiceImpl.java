@@ -25,6 +25,7 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
 
     private final StripePaymentRepository stripePaymentRepository;
     private final DonRepository donRepository;
+    private final NotificationService notificationService;
 
     static {
         Stripe.apiKey = "sk_test_51QwSi3GduHSrwvYo7AR4eR1xJUxwF2Va4sM8h4hQbOZmmPBgaLq8UR4w1J1UWxbbEYiox8FIiynYBN7OXAVqirTs00d9aYXRAN";
@@ -33,37 +34,20 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
     @Override
     public StripePayment createPaymentIntent(StripePaymentRequest request) throws StripeException {
         try {
-            // Si donId est null, créez un nouveau don automatiquement
-            Don don;
-            if (request.getDonId() == null) {
-                don = new Don();
-                don.setDateDon(new Date());
-                don.setAmount(request.getAmount());
-                don.setTypeDon(TypeDon.ARGENT); // Ou MATERIEL selon votre besoin
-                // Vous pouvez définir d'autres valeurs par défaut si nécessaire
-                don = donRepository.save(don);
-                log.info("Created new Don with ID: {}", don.getIdDon());
-            } else {
-                Optional<Don> donOptional = donRepository.findById(request.getDonId());
-                don = donOptional.orElseThrow(() ->
-                        new IllegalArgumentException("Don not found with ID: " + request.getDonId()));
-            }
+            // Gestion du don associé
+            Don don = handleDonAssociation(request);
 
-            PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                    .setAmount(request.getAmountInCents())
-                    .setCurrency(request.getCurrency().toLowerCase())
-                    .setDescription(request.getDescription())
-                    .setReceiptEmail(request.getEmail())
-                    .putMetadata("donId", String.valueOf(don.getIdDon()))
-                    .setAutomaticPaymentMethods(
-                            PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
-                                    .setEnabled(true)
-                                    .build()
-                    )
-                    .build();
+            // Création du Payment Intent avec Stripe
+            PaymentIntent paymentIntent = createStripePaymentIntent(request, don);
 
-            PaymentIntent paymentIntent = PaymentIntent.create(params);
-            return savePayment(paymentIntent, request, don);
+            // Sauvegarde en base
+            StripePayment savedPayment = savePayment(paymentIntent, request, don);
+
+            // Notification
+            notificationService.createAndSendStripeNotification(savedPayment);
+
+            return savedPayment;
+
         } catch (StripeException e) {
             log.error("Stripe error: {}", e.getMessage());
             throw e;
@@ -71,6 +55,35 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
             log.error("Unexpected error: {}", e.getMessage());
             throw new RuntimeException("Payment processing failed", e);
         }
+    }
+
+    private Don handleDonAssociation(StripePaymentRequest request) {
+        if (request.getDonId() == null) {
+            Don newDon = new Don();
+            newDon.setDateDon(new Date());
+            newDon.setAmount(request.getAmount());
+            newDon.setTypeDon(TypeDon.ARGENT);
+            return donRepository.save(newDon);
+        } else {
+            return donRepository.findById(request.getDonId())
+                    .orElseThrow(() -> new IllegalArgumentException("Don not found with ID: " + request.getDonId()));
+        }
+    }
+
+    private PaymentIntent createStripePaymentIntent(StripePaymentRequest request, Don don) throws StripeException {
+        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+                .setAmount(request.getAmountInCents())
+                .setCurrency(request.getCurrency().toLowerCase())
+                .setDescription(request.getDescription())
+                .setReceiptEmail(request.getEmail())
+                .putMetadata("donId", String.valueOf(don.getIdDon()))
+                .setAutomaticPaymentMethods(
+                        PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
+                                .setEnabled(true)
+                                .build()
+                )
+                .build();
+        return PaymentIntent.create(params);
     }
 
     public StripePayment savePayment(PaymentIntent paymentIntent, StripePaymentRequest request, Don don) {
@@ -83,12 +96,8 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
         payment.setEmail(request.getEmail());
         payment.setDescription(request.getDescription());
         payment.setDon(don);
-
         return stripePaymentRepository.save(payment);
     }
-
-    // ... autres méthodes inchangées ...
-
 
     @Override
     public List<StripePayment> getPaymentsByDonId(Long donId) {
@@ -141,5 +150,10 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
             log.error("Error deleting payment with ID {}: {}", id, e.getMessage());
             throw new RuntimeException("Failed to delete payment", e);
         }
+    }
+
+    @Override
+    public List<StripePayment> getAllPayment() {
+        return stripePaymentRepository.findAll();
     }
 }

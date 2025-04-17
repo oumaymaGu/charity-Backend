@@ -30,4 +30,6 @@ public interface IStripePaymentService {
 
     // Supprimer un paiement
     void deleteStripePayment(Long id);
+
+    List<StripePayment> getAllPayment();
 }
