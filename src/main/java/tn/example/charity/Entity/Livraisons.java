@@ -18,6 +18,7 @@ public class Livraisons {
     private String nom;
     private String adresseLivr;
     private Date dateLivraison;
+    private String emailClient;
     @Enumerated(EnumType.STRING)
     private EtatLivraisons  etatLivraisons;
 }
