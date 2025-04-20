@@ -6,6 +6,7 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.PaymentMethod;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
@@ -93,7 +94,9 @@ public class StripePaymentRestController {
             @PathVariable String paymentIntentId,
             @RequestParam String customerName,
             @RequestParam String email,
-            @RequestParam double amount) {
+            @RequestParam double amount,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) String phone) throws StripeException {
 
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -102,10 +105,10 @@ public class StripePaymentRestController {
             document.open();
 
             // Définition des couleurs personnalisées
-            BaseColor headerBg = new BaseColor(44, 62, 80);         // Bleu foncé
+            BaseColor headerBg = new BaseColor(44, 62, 80);
             BaseColor headerText = BaseColor.WHITE;
-            BaseColor borderColor = new BaseColor(189, 195, 199);   // Gris clair
-            BaseColor labelColor = new BaseColor(52, 73, 94);       // Gris foncé
+            BaseColor borderColor = new BaseColor(189, 195, 199);
+            BaseColor labelColor = new BaseColor(52, 73, 94);
             BaseColor valueColor = BaseColor.BLACK;
 
             // Fontes
@@ -114,8 +117,20 @@ public class StripePaymentRestController {
             Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, labelColor);
             Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 12, valueColor);
             Font tableHeaderFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, headerText);
-            Font thanksFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 12, labelColor);
             Font footerFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, BaseColor.GRAY);
+
+            // Ajout d'un fond décoratif
+            try {
+                ClassPathResource backgroundResource = new ClassPathResource("static/images/background.png");
+                InputStream backgroundStream = backgroundResource.getInputStream();
+                byte[] backgroundBytes = backgroundStream.readAllBytes();
+                Image background = Image.getInstance(backgroundBytes);
+                background.setAbsolutePosition(0, 0);
+                background.scaleToFit(document.getPageSize().getWidth(), document.getPageSize().getHeight());
+                document.add(background);
+            } catch (Exception e) {
+                log.warn("Background image not found in classpath (static/images/background.png), skipping background: {}", e.getMessage());
+            }
 
             // En-tête : Logo et Nom de l'organisation
             PdfPTable headerTable = new PdfPTable(2);
@@ -123,7 +138,7 @@ public class StripePaymentRestController {
             headerTable.setWidths(new float[]{1f, 4f});
             headerTable.setSpacingAfter(20f);
 
-            // Logo (Load from classpath: static/images/logo.png)
+            // Logo
             try {
                 ClassPathResource logoResource = new ClassPathResource("static/images/logo.png");
                 InputStream logoStream = logoResource.getInputStream();
@@ -142,7 +157,7 @@ public class StripePaymentRestController {
             }
 
             // Nom de l'organisation
-            PdfPCell orgCell = new PdfPCell(new Phrase("Charity Association", organizationFont));
+            PdfPCell orgCell = new PdfPCell(new Phrase("Humanity", organizationFont));
             orgCell.setBorder(Rectangle.NO_BORDER);
             orgCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             orgCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
@@ -150,15 +165,21 @@ public class StripePaymentRestController {
 
             document.add(headerTable);
 
-            // Titre
+            // Titre et message d'acceptation
             Paragraph title = new Paragraph("REÇU DE PAIEMENT", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20f);
+            title.setSpacingAfter(10f);
             document.add(title);
+
+            Paragraph acceptance = new Paragraph("Votre paiement a été accepté", FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.GRAY));
+            acceptance.setAlignment(Element.ALIGN_CENTER);
+            acceptance.setSpacingAfter(20f);
+            document.add(acceptance);
 
             // Tableau avec bordures et couleurs
             PdfPTable table = new PdfPTable(2);
-            table.setWidthPercentage(100);
+            table.setWidthPercentage(90); // Ajusté pour centrer avec des espaces
+            table.setHorizontalAlignment(Element.ALIGN_CENTER);
             table.setWidths(new float[]{3f, 7f});
             table.setSpacingBefore(10f);
 
@@ -175,32 +196,61 @@ public class StripePaymentRestController {
             headerCell2.setBorderColor(borderColor);
             table.addCell(headerCell2);
 
-            // Formatage de la date
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
-            String formattedDate = dateFormat.format(new Date());
+            // Récupérer les détails du PaymentIntent
+            PaymentIntent paymentIntent = stripePaymentService.retrievePaymentIntent(paymentIntentId);
+            String paymentMethodId = paymentIntent.getPaymentMethod();
+            PaymentMethod paymentMethod = paymentMethodId != null ? PaymentMethod.retrieve(paymentMethodId) : null;
+            String brand = paymentMethod != null && paymentMethod.getCard() != null ? paymentMethod.getCard().getBrand() : "Unknown";
+            String last4 = paymentMethod != null && paymentMethod.getCard() != null ? paymentMethod.getCard().getLast4() : "****";
+            String authorizationCode = "N/A"; // À améliorer avec les Charges si nécessaire
+            String transactionId = paymentIntent.getId();
 
-            // Lignes du tableau
-            addStyledRow(table, "Date :", formattedDate, labelFont, valueFont, borderColor);
-            addStyledRow(table, "Transaction ID :", paymentIntentId, labelFont, valueFont, borderColor);
-            addStyledRow(table, "Nom du client :", customerName, labelFont, valueFont, borderColor);
+            // Formatage de la date
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            String formattedDate = dateFormat.format(new Date(paymentIntent.getCreated() * 1000L));
+
+            // DÉTAIL DE PAIEMENT
+            PdfPCell detailHeader = new PdfPCell(new Phrase("DÉTAIL DE PAIEMENT", tableHeaderFont));
+            detailHeader.setColspan(2);
+            detailHeader.setBackgroundColor(headerBg);
+            detailHeader.setHorizontalAlignment(Element.ALIGN_CENTER);
+            detailHeader.setBorderColor(borderColor);
+            table.addCell(detailHeader);
+
+            addStyledRow(table, "Date de paiement :", formattedDate, labelFont, valueFont, borderColor);
+            addStyledRow(table, "N° de paiement :", paymentIntent.getId(), labelFont, valueFont, borderColor);
+            addStyledRow(table, "Code d'autorisation :", authorizationCode, labelFont, valueFont, borderColor);
+            addStyledRow(table, "Méthode de paiement :", brand.toUpperCase(), labelFont, valueFont, borderColor);
+            addStyledRow(table, "N° de carte de paiement :", "**** **** **** " + last4, labelFont, valueFont, borderColor);
+            addStyledRow(table, "N° transaction :", transactionId, labelFont, valueFont, borderColor);
+
+            // DÉTAIL DE LA COMMANDE
+            PdfPCell commandHeader = new PdfPCell(new Phrase("DÉTAIL DE LA COMMANDE", tableHeaderFont));
+            commandHeader.setColspan(2);
+            commandHeader.setBackgroundColor(headerBg);
+            commandHeader.setHorizontalAlignment(Element.ALIGN_CENTER);
+            commandHeader.setBorderColor(borderColor);
+            table.addCell(commandHeader);
+
+            addStyledRow(table, "Identifiant :", paymentIntent.getId() + "_order", labelFont, valueFont, borderColor);
+            addStyledRow(table, "Montant (EUR) :", String.format("%.2f EUR", amount), labelFont, valueFont, borderColor);
+
+            // INFORMATIONS DU CLIENT
+            PdfPCell clientHeader = new PdfPCell(new Phrase("INFORMATIONS DU CLIENT", tableHeaderFont));
+            clientHeader.setColspan(2);
+            clientHeader.setBackgroundColor(headerBg);
+            clientHeader.setHorizontalAlignment(Element.ALIGN_CENTER);
+            clientHeader.setBorderColor(borderColor);
+            table.addCell(clientHeader);
+
+            addStyledRow(table, "Nom :", customerName, labelFont, valueFont, borderColor);
             addStyledRow(table, "Email :", email, labelFont, valueFont, borderColor);
-            addStyledRow(table, "Montant :", String.format("%.2f €", amount), labelFont, valueFont, borderColor);
 
             document.add(table);
 
-            // Message de remerciement
-            Paragraph thanks = new Paragraph(
-                    "\nMerci pour votre don précieux ! Votre soutien fait toute la différence.",
-                    thanksFont);
-            thanks.setAlignment(Element.ALIGN_CENTER);
-            thanks.setSpacingBefore(25f);
-            thanks.setSpacingAfter(30f);
-            document.add(thanks);
-
-            // Footer avec coordonnées
+            // Footer
             Paragraph footer = new Paragraph(
-                    "Charity Association | 123 Rue de la Charité, 75000 Paris, France | contact@charity.org | +33 1 23 45 67 89\n" +
-                            "Ce reçu est généré automatiquement. Veuillez le conserver pour vos dossiers.",
+                    "Humanity (http://www.humanity.com)",
                     footerFont);
             footer.setAlignment(Element.ALIGN_CENTER);
             footer.setSpacingBefore(30f);

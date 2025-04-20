@@ -3,6 +3,7 @@ package tn.example.charity.Service;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -155,5 +156,10 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
     @Override
     public List<StripePayment> getAllPayment() {
         return stripePaymentRepository.findAll();
+    }
+
+    @Override
+    public PaymentIntent retrievePaymentIntent(String paymentIntentId) throws StripeException {
+        return PaymentIntent.retrieve(paymentIntentId);
     }
 }

@@ -148,6 +148,12 @@ public class DonRestController {
         return ResponseEntity.ok(materialDons);
     }
 
+    @GetMapping("/material/category/{category}")
+    public ResponseEntity<List<Don>> getDonsByCategory(@PathVariable("category") String category) {
+        List<Don> dons = donService.findByCategory(category.toUpperCase());
+        return ResponseEntity.ok(dons);
+    }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> removeDon(@PathVariable("id") Long idDon) {
         donService.deleteDon(idDon);

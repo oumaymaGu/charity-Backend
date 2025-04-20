@@ -82,4 +82,9 @@ public class DonServiceImpl implements IDonService {
     public Don retrieveallDonbyid(Long idDon) {
         return donRepository.findById(idDon).orElse(null);
     }
+
+    @Override
+    public List<Don> findByCategory(String category) {
+        return donRepository.findByCategoryAndTypeDon(category.toUpperCase(), TypeDon.MATERIEL);
+    }
 }
