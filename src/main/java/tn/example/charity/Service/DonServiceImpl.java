@@ -25,6 +25,8 @@ public class DonServiceImpl implements IDonService {
         int newQuantity = (don.getQuantity() == null || don.getQuantity() <= 0) ? 1 : don.getQuantity();
         don.setQuantity(newQuantity);
 
+        log.info("Ajout d'un nouveau don: DonorName={}, DonorContact={}", don.getDonorName(), don.getDonorContact());
+
         if (don.getTypeDon() == TypeDon.MATERIEL && don.getPhotoUrl() != null && !don.getPhotoUrl().isEmpty()) {
             Optional<Don> existingDonOpt;
             if ("MEDICAMENT".equalsIgnoreCase(don.getCategory())) {
@@ -48,7 +50,7 @@ public class DonServiceImpl implements IDonService {
 
         Don savedDon = donRepository.save(don);
         notificationService.createAndSendDonNotification(savedDon);
-        log.info("Nouveau don créé avec ID {}", savedDon.getIdDon());
+        log.info("Nouveau don créé avec ID {}. DonorName={}, DonorContact={}", savedDon.getIdDon(), savedDon.getDonorName(), savedDon.getDonorContact());
         return savedDon;
     }
 

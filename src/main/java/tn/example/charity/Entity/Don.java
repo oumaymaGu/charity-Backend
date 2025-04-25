@@ -19,7 +19,8 @@ public class Don {
     private long idDon;
     private Date dateDon;
     private String photoUrl;
-    private String donorContact;
+    private String donorContact; // Used for email
+    private String donorName;   // Added for donor's name
     private double amount;
     private String category;
     @Column(nullable = true)
@@ -33,7 +34,7 @@ public class Don {
     @Column(nullable = true)
     private String productCode;
     @Column(nullable = true)
-    private String imageHash; // Nouveau champ pour stocker le hash de l'image
+    private String imageHash;
     @Column(nullable = true)
     private Integer quantity = 1;
 

@@ -35,8 +35,23 @@ public class DonRestController {
 
     @PostMapping("/add")
     public ResponseEntity<Don> addDon(@RequestBody Don d) {
+        // Log des données reçues
+        System.out.println("Don reçu dans addDon: " + d.toString());
+        System.out.println("DonorName: " + d.getDonorName() + ", DonorContact: " + d.getDonorContact());
+
+        // Vérifier et définir les valeurs par défaut si nécessaire
+        if (d.getDonorContact() == null || d.getDonorContact().trim().isEmpty()) {
+            System.out.println("DonorContact est vide, définition de la valeur par défaut.");
+            d.setDonorContact("No email provided");
+        }
+        if (d.getDonorName() == null || d.getDonorName().trim().isEmpty()) {
+            System.out.println("DonorName est vide, définition de la valeur par défaut.");
+            d.setDonorName("Anonymous");
+        }
+
         Don savedDon = donService.addDon(d);
         notificationService.createAndSendDonNotification(savedDon);
+        System.out.println("Don sauvegardé: " + savedDon.toString());
         return ResponseEntity.ok(savedDon);
     }
 
@@ -45,19 +60,17 @@ public class DonRestController {
             @RequestPart("don") Don don,
             @RequestPart(value = "medicationImage", required = false) MultipartFile medicationImage) {
         try {
-            String photoUrl = null;
-            // 📸 Upload de la photo
-            if (medicationImage != null && !medicationImage.isEmpty()) {
-                // Calculer le hash MD5 de l'image pour identifier les doublons
-                String imageHash = computeImageHash(medicationImage.getBytes());
+            // Log des données reçues
+            System.out.println("Don reçu dans addDonWithMedication: " + don.toString());
+            System.out.println("DonorName: " + don.getDonorName() + ", DonorContact: " + don.getDonorContact());
 
-                // Vérifier si un don avec le même hash d'image existe déjà
+            String photoUrl = null;
+            if (medicationImage != null && !medicationImage.isEmpty()) {
+                String imageHash = computeImageHash(medicationImage.getBytes());
                 Optional<Don> existingDon = donService.findByImageHash(imageHash);
                 if (existingDon.isPresent()) {
-                    // Réutiliser le photoUrl existant
                     photoUrl = existingDon.get().getPhotoUrl();
                 } else {
-                    // Créer un nouveau fichier si aucun doublon n'est trouvé
                     Path uploadPath = Paths.get(UPLOAD_DIRECTORY);
                     if (!Files.exists(uploadPath)) {
                         Files.createDirectories(uploadPath);
@@ -68,15 +81,23 @@ public class DonRestController {
                     photoUrl = "http://localhost:8089/uploads/" + fileName;
                 }
                 don.setPhotoUrl(photoUrl);
-                don.setImageHash(imageHash); // Stocker le hash pour les futures vérifications
+                don.setImageHash(imageHash);
             }
 
-            // 💊 Traitement OCR pour les dons matériels de type médicament
+            // Vérifier et définir les valeurs par défaut si nécessaire
+            if (don.getDonorContact() == null || don.getDonorContact().trim().isEmpty()) {
+                System.out.println("DonorContact est vide, définition de la valeur par défaut.");
+                don.setDonorContact("No email provided");
+            }
+            if (don.getDonorName() == null || don.getDonorName().trim().isEmpty()) {
+                System.out.println("DonorName est vide, définition de la valeur par défaut.");
+                don.setDonorName("Anonymous");
+            }
+
             if (don.getTypeDon() == TypeDon.MATERIEL
                     && "MEDICAMENT".equalsIgnoreCase(don.getCategory())
                     && medicationImage != null
                     && !medicationImage.isEmpty()) {
-
                 MedicationInfo info = ocrService.extractMedicationInfo(medicationImage);
                 if (info != null) {
                     if (info.getMedicationName() != null) don.setMedicationName(info.getMedicationName());
@@ -85,28 +106,24 @@ public class DonRestController {
                     if (info.getFabricationDate() != null) don.setFabricationDate(info.getFabricationDate());
                     if (info.getProductCode() != null) don.setProductCode(info.getProductCode());
                 } else {
-                    return ResponseEntity
-                            .status(HttpStatus.BAD_REQUEST)
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                             .body("Échec de l'extraction OCR : aucune information trouvée.");
                 }
             }
-            // ✅ Sauvegarde du don
+
             Don savedDon = donService.addDon(don);
             notificationService.createAndSendDonNotification(savedDon);
+            System.out.println("Don sauvegardé: " + savedDon.toString());
             return ResponseEntity.ok(savedDon);
-
         } catch (IOException e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erreur lors de l'upload de l'image : " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erreur inattendue : " + e.getMessage());
         }
     }
 
-    // Méthode pour calculer le hash MD5 de l'image
     private String computeImageHash(byte[] imageBytes) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("MD5");
         byte[] hashBytes = md.digest(imageBytes);
@@ -122,17 +139,14 @@ public class DonRestController {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("Aucun fichier uploadé.");
         }
-
         try {
             Path uploadPath = Paths.get(UPLOAD_DIRECTORY);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
-
             String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
             Path filePath = uploadPath.resolve(fileName);
             Files.write(filePath, file.getBytes());
-
             return ResponseEntity.ok("http://localhost:8089/uploads/" + fileName);
         } catch (IOException e) {
             e.printStackTrace();
