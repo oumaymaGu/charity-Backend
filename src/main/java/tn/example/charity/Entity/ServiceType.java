@@ -1,0 +1,11 @@
+package tn.example.charity.Entity;
+
+public enum ServiceType {
+    PSYCHIATRIC_EMERGENCY,
+    CRISIS_INTERVENTION,
+    INPATIENT_TREATMENT,
+    OUTPATIENT_TREATMENT,
+    SUBSTANCE_ABUSE_TREATMENT,
+    COUNSELING,
+    SUPPORT_GROUP
+}
