@@ -156,4 +156,9 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
     public List<StripePayment> getAllPayment() {
         return stripePaymentRepository.findAll();
     }
+
+    @Override
+    public PaymentIntent retrievePaymentIntent(String paymentIntentId) throws StripeException {
+        return PaymentIntent.retrieve(paymentIntentId);
+    }
 }
