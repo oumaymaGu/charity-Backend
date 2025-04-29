@@ -58,4 +58,21 @@ public class LogestiqueServiceImpl implements  ILogestiqueService{
         logestique.setEvent(event);
         return logestiqueRepository.save(logestique);
     }
+
+    @Override
+    public Logestique assignLogestiqueToEventWithQuantity(Long idlogestique, Long idEvent, float quantity) {
+        Logestique log = logestiqueRepository.findById(idlogestique)
+                .orElseThrow(() -> new RuntimeException("Logistique non trouvée"));
+
+        if (log.getQuantity() < quantity) {
+            throw new RuntimeException("Quantité insuffisante pour l’assignation");
+        }
+
+        // Mise à jour de la quantité restante
+        log.setQuantity(log.getQuantity() - quantity);
+
+
+        return logestiqueRepository.save(log);
+    }
+
 }
