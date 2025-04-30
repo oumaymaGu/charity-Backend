@@ -233,7 +233,7 @@ public class StripePaymentRestController {
             table.addCell(commandHeader);
 
             addStyledRow(table, "Identifiant :", paymentIntent.getId() + "_order", labelFont, valueFont, borderColor);
-            addStyledRow(table, "Montant :", String.format("%.2f MAD", amount * 10.8), labelFont, valueFont, borderColor);
+            addStyledRow(table, "Montant (EUR) :", String.format("%.2f EUR", amount), labelFont, valueFont, borderColor);
 
             // INFORMATIONS DU CLIENT
             PdfPCell clientHeader = new PdfPCell(new Phrase("INFORMATIONS DU CLIENT", tableHeaderFont));

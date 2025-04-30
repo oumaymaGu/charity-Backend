@@ -10,6 +10,7 @@ import javax.validation.constraints.*;
 public class StripePaymentRequest {
     @Positive(message = "Le montant doit être positif")
     @NotNull(message = "Le montant ne peut pas être nul")
+    @Max(value = 1000, message = "Le montant semble être en centimes, veuillez entrer le montant en euros") // Ajout d'une validation
     private Double amount;
 
     @NotBlank(message = "La devise ne peut pas être vide")
@@ -24,7 +25,6 @@ public class StripePaymentRequest {
     @Size(max = 500, message = "La description ne peut pas dépasser 500 caractères")
     private String description;
 
-    // Supprimez la validation @NotNull pour donId
     private Long donId;
 
     public long getAmountInCents() {

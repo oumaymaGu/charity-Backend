@@ -31,7 +31,6 @@ public class OcrService implements IOcrService {
     private static final Pattern LOT_PATTERN = Pattern.compile("(?:Lot|LOT|N°|No|Num|Numéro)[\\s:]*([A-Z0-9]{4,})", Pattern.CASE_INSENSITIVE);
     private static final Pattern EXP_DATE_PATTERN = Pattern.compile("(?:EXP|Exp\\.|Expiration|Date exp\\.)[\\s:]*((\\d{2})[\\/](\\d{2,4}))", Pattern.CASE_INSENSITIVE);
     private static final Pattern DATE_PATTERN = Pattern.compile("\\b(\\d{2}[\\/]\\d{2}[\\/]\\d{2,4}|\\d{2}[\\/]\\d{4})\\b");
-    private static final Pattern NAME_PATTERN = Pattern.compile("(?:Nom|Médicament|Produit|Désignation|Marque)[\\s:]*([^\\n]+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern PC_PATTERN = Pattern.compile("(?:PC|Code produit)[\\s:]*([0-9]{12,14})", Pattern.CASE_INSENSITIVE);
     private static final Pattern FABRICATION_DATE_PATTERN = Pattern.compile("(?:Fabriqué le|Fab\\.|Date fab\\.|Fabrication)[\\s:]*((\\d{2}[\\/\\-]\\d{2}[\\/\\-]\\d{2,4}))", Pattern.CASE_INSENSITIVE);
 
@@ -40,7 +39,6 @@ public class OcrService implements IOcrService {
             String extractedText = extractTextFromImage(file);
             MedicationInfo info = analyzeText(extractedText);
 
-            // Validation de la date d'expiration
             if (info.getExpirationDate() != null) {
                 boolean isValid = isExpirationDateValid(info.getExpirationDate());
                 info.setExpirationValid(isValid);
@@ -55,12 +53,11 @@ public class OcrService implements IOcrService {
     }
 
     private MedicationInfo analyzeText(String text) {
+        String medicationName = extractMedicationName(text);
         String[] lines = text.split("\\r?\\n");
-
         String lotNumber = extractLotNumber(text, lines);
         String expirationDate = extractExpirationDate(text, lines);
         String fabricationDate = extractFabricationDate(text, lines);
-        String medicationName = extractMedicationName(text, lines);
         String productCode = extractProductCode(text, lines);
 
         return new MedicationInfo(
@@ -70,10 +67,102 @@ public class OcrService implements IOcrService {
                 productCode != null ? productCode : "Non détecté",
                 fabricationDate != null ? fabricationDate : "Non détectée",
                 text,
-                false // Sera mis à jour après validation
+                false
         );
     }
 
+    private String extractMedicationName(String fullText) {
+        // Diviser le texte en lignes pour isoler le nom
+        String[] lines = fullText.split("\\r?\\n");
+
+        // Première tentative : chercher une ligne qui ressemble à un nom de médicament
+        // (contient des lettres, éventuellement des chiffres, mais pas de mots-clés comme "lot", "exp", "fab")
+        Pattern namePattern = Pattern.compile("(?i)^(?!.*(?:lot|exp|fab|fabrication|ppt|prix|valable|pharmacie|الصيدلية|الثمن)).*[a-zA-ZÀ-ÿ].*");
+        for (String line : lines) {
+            if (namePattern.matcher(line).find()) {
+                System.out.println("Ligne potentielle pour le nom : " + line);
+                String cleanedName = cleanLine(line);
+                if (!cleanedName.isEmpty()) {
+                    return cleanedName;
+                }
+            }
+        }
+
+        // Deuxième tentative : nettoyer le texte complet si aucune ligne n'est trouvée
+        String cleanedText = fullText;
+        String[] patternsToRemove = {
+                "(?i)(?:lot|l.n|lot\\.|n°|no|num|numéro)[\\s:]*[a-zA-Z0-9\\s]{4,}", // Numéro de lot
+                "(?i)(?:exp|expiration|date exp\\.|date d'expiration|valable jusqu'à|use by|best before)[\\s:]*(\\d{2}/\\d{2,4}(?:/\\d{4})?)", // Date d'expiration
+                "(?i)(?:fab|fabrication|date fab\\.|date de fabrication|fabriqué le|mfg|manufactured)[\\s:]*(\\d{2}/\\d{4}|\\d{2}/\\d{2}/\\d{4})", // Date de fabrication
+                "(?i)(?:pc|code produit|code prod\\.|ean|upc)[\\s:]*\\d{12,14}", // Code produit
+                "(?i)ppt[\\s:]*\\d+,\\d+\\s*(dt|eur|usd)", // Prix
+                "(?i)\\d+\\s*(comprimés?|capsules?|gélules?|sachets?|flacons?|tablets?|pills?)(?:\\s*effervescents?)?", // Quantité et forme
+                "(?i)\\s*effervescent(e)?s?", // Effervescent
+                "(?i)\\s*\\d+\\s*(ml|mg|g|kg)[\\s]*", // Unités de dosage
+                "(?i)made in [a-zA-ZÀ-ÿ]+", // Made in
+                "(?i)[a-zA-ZÀ-ÿ]+ (laboratories|laboratoire|pharma|pharmaceuticals)", // Laboratoires
+                "(?i)fl\\s*\\d+\\s*ml", // "FL 25 ml"
+                "(?i)\\d{1,4}\\s*-\\s*\\d{1,4}\\s*(ou|uuo)?\\s*\\d{2}\\s*\\d{3}\\s*\\d{3}", // Numéros de téléphone
+                "(?i)pharmacie.*|el raed.*|el malek.*|prix.*|pharmacy.*|drugstore.*|الصيدلية.*|الملك.*|الثمن.*", // Textes indésirables
+                "(?i)\\b\\d{1,4}\\b", // Numéros isolés
+                "[^a-zA-ZÀ-ÿ\\s\\d]", // Caractères non désirés
+                "(?i)(?:for|pour) (external|oral|intravenous) use", // Usage (ex: "For external use")
+                "(?i)batch.*|serial.*|s/n.*", // Batch ou serial
+                "(?i)keep out of reach.*|conserver hors.*", // Instructions de stockage
+                "(?i)distribué par.*|distributed by.*" // Distributeur
+        };
+
+        for (String pattern : patternsToRemove) {
+            cleanedText = cleanedText.replaceAll(pattern, "").trim();
+        }
+
+        cleanedText = cleanedText.replaceAll("\\s+", " ").trim();
+
+        if (!cleanedText.isEmpty()) {
+            // Capitalisation : première lettre en majuscule, le reste en minuscules
+            cleanedText = cleanedText.substring(0, 1).toUpperCase() + cleanedText.substring(1).toLowerCase();
+        }
+
+        System.out.println("Nom nettoyé final : " + cleanedText);
+        return cleanedText.isEmpty() ? "Non détecté" : cleanedText;
+    }
+
+    private String cleanLine(String line) {
+        String[] patternsToRemove = {
+                "(?i)(?:lot|l.n|lot\\.|n°|no|num|numéro)[\\s:]*[a-zA-Z0-9\\s]{4,}",
+                "(?i)(?:exp|expiration|date exp\\.|date d'expiration|valable jusqu'à|use by|best before)[\\s:]*(\\d{2}/\\d{2,4}(?:/\\d{4})?)",
+                "(?i)(?:fab|fabrication|date fab\\.|date de fabrication|fabriqué le|mfg|manufactured)[\\s:]*(\\d{2}/\\d{4}|\\d{2}/\\d{2}/\\d{4})",
+                "(?i)(?:pc|code produit|code prod\\.|ean|upc)[\\s:]*\\d{12,14}",
+                "(?i)ppt[\\s:]*\\d+,\\d+\\s*(dt|eur|usd)",
+                "(?i)\\d+\\s*(comprimés?|capsules?|gélules?|sachets?|flacons?|tablets?|pills?)(?:\\s*effervescents?)?",
+                "(?i)\\s*effervescent(e)?s?",
+                "(?i)\\s*\\d+\\s*(ml|mg|g|kg)[\\s]*",
+                "(?i)made in [a-zA-ZÀ-ÿ]+",
+                "(?i)[a-zA-ZÀ-ÿ]+ (laboratories|laboratoire|pharma|pharmaceuticals)",
+                "(?i)fl\\s*\\d+\\s*ml",
+                "(?i)\\d{1,4}\\s*-\\s*\\d{1,4}\\s*(ou|uuo)?\\s*\\d{2}\\s*\\d{3}\\s*\\d{3}",
+                "(?i)pharmacie.*|el raed.*|el malek.*|prix.*|pharmacy.*|drugstore.*|الصيدلية.*|الملك.*|الثمن.*",
+                "(?i)\\b\\d{1,4}\\b",
+                "[^a-zA-ZÀ-ÿ\\s\\d]",
+                "(?i)(?:for|pour) (external|oral|intravenous) use",
+                "(?i)batch.*|serial.*|s/n.*",
+                "(?i)keep out of reach.*|conserver hors.*",
+                "(?i)distribué par.*|distributed by.*"
+        };
+
+        String cleanedLine = line;
+        for (String pattern : patternsToRemove) {
+            cleanedLine = cleanedLine.replaceAll(pattern, "").trim();
+        }
+
+        cleanedLine = cleanedLine.replaceAll("\\s+", " ").trim();
+
+        if (!cleanedLine.isEmpty()) {
+            cleanedLine = cleanedLine.substring(0, 1).toUpperCase() + cleanedLine.substring(1).toLowerCase();
+        }
+
+        return cleanedLine;
+    }
     private String extractLotNumber(String fullText, String[] lines) {
         Matcher matcher = LOT_PATTERN.matcher(fullText);
         if (matcher.find()) {
@@ -135,7 +224,6 @@ public class OcrService implements IOcrService {
                     .with(TemporalAdjusters.lastDayOfMonth());
             LocalDate currentDate = LocalDate.now();
 
-            // Accepter si la date d'expiration est >= date actuelle
             return !expirationDate.isBefore(currentDate);
         } catch (Exception e) {
             return false;
@@ -149,28 +237,8 @@ public class OcrService implements IOcrService {
         for (int i = 0; i < lines.length; i++) {
             if (lines[i].matches("(?i).*Fabrication.*") && i + 1 < lines.length) {
                 String potentialDate = lines[i + 1].trim();
-                if (potentialDate.matches("\\d{2}[\\/\\-]\\d{2}[\\/\\-]\\d{2,4}")) return potentialDate;
+                if (potentialDate.matches("\\d{2}[/-]\\d{2}[/-]\\d{2,4}")) return potentialDate;
             }
-        }
-
-        return null;
-    }
-
-    private String extractMedicationName(String fullText, String[] lines) {
-        Matcher matcher = NAME_PATTERN.matcher(fullText);
-        if (matcher.find()) return matcher.group(1).trim();
-
-        for (String line : lines) {
-            if (line.matches(".*[A-Za-zÀ-ÿ].*") &&
-                    line.matches(".*\\d.*") &&
-                    line.length() > 5 &&
-                    !line.matches(".*(Lot|Exp|PC|Date).*")) {
-                return line.trim();
-            }
-        }
-
-        for (String line : lines) {
-            if (line.matches("[A-Za-zÀ-ÿ]{4,}")) return line.trim();
         }
 
         return null;
