@@ -8,9 +8,9 @@ import tn.example.charity.Entity.*;
 import tn.example.charity.Repository.NotificationRepository;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +23,9 @@ public class NotificationService implements INotificationService {
     @Transactional
     public void createAndSendDonNotification(Don donation) {
         String message = donation.getTypeDon() == TypeDon.MATERIEL
-                ? String.format("Nouveau don matériel: %s",
+                ? String.format("Nouveau don matériel : %s",
                 donation.getCategory() != null ? donation.getCategory() : "Non spécifié")
-                : String.format("Nouveau don financier: %.2f€", donation.getAmount());
+                : String.format("Nouveau don financier : %.2f€", donation.getAmount());
 
         String type = donation.getTypeDon() == TypeDon.MATERIEL
                 ? "DON_MATERIEL"
@@ -37,8 +37,8 @@ public class NotificationService implements INotificationService {
     @Override
     @Transactional
     public void createAndSendStripeNotification(StripePayment stripePayment) {
-        String message = String.format("Nouveau paiement Stripe: %.2f%s (Status: %s)",
-                stripePayment.getAmount(),
+        String message = String.format("Nouveau paiement Stripe : %.2f %s (Status : %s)",
+                stripePayment.getAmount(), // Maintenant en euros
                 stripePayment.getCurrency(),
                 stripePayment.getStatus());
 
@@ -60,7 +60,6 @@ public class NotificationService implements INotificationService {
     }
 
     private void sendWebSocketNotification(Notification notification) {
-
         Map<String, Object> payload = new HashMap<>();
         payload.put("id", notification.getId());
         payload.put("message", notification.getMessage());
