@@ -22,31 +22,43 @@ public class NotificationService implements INotificationService {
     @Override
     @Transactional
     public void createAndSendDonNotification(Don donation) {
-        String message = donation.getTypeDon() == TypeDon.MATERIEL
-                ? String.format("Nouveau don matériel : %s",
-                donation.getCategory() != null ? donation.getCategory() : "Non spécifié")
-                : String.format("Nouveau don financier : %.2f€", donation.getAmount());
+        if (donation.getTypeDon() == TypeDon.MATERIEL) {
+            if (donation.getCategory() == null || donation.getCategory().trim().isEmpty()) {
+                System.out.println("Catégorie null ou vide pour Don ID: " + donation.getIdDon());
+                return;
+            }
 
-        String type = donation.getTypeDon() == TypeDon.MATERIEL
-                ? "DON_MATERIEL"
-                : "DON_FINANCIER";
+            String message = String.format("Nouveau don matériel : %s", donation.getCategory());
+            if (notificationExists(message, "DON_MATERIEL", donation.getIdDon())) {
+                System.out.println("Notification déjà existante pour Don ID: " + donation.getIdDon());
+                return;
+            }
 
-        createAndSendNotification(message, type, donation, null);
+            createAndSendNotification(message, "DON_MATERIEL", donation, null);
+
+        } else {
+            String message = String.format("Nouveau don financier : %.2f€", donation.getAmount());
+            if (notificationExists(message, "DON_FINANCIER", donation.getIdDon())) {
+                System.out.println("Notification financière déjà existante pour Don ID: " + donation.getIdDon());
+                return;
+            }
+
+            createAndSendNotification(message, "DON_FINANCIER", donation, null);
+        }
     }
 
     @Override
     @Transactional
     public void createAndSendStripeNotification(StripePayment stripePayment) {
         String message = String.format("Nouveau paiement Stripe : %.2f %s (Status : %s)",
-                stripePayment.getAmount(), // Maintenant en euros
+                stripePayment.getAmount(),
                 stripePayment.getCurrency(),
                 stripePayment.getStatus());
 
         createAndSendNotification(message, "STRIPE_PAYMENT", null, stripePayment);
     }
 
-    private void createAndSendNotification(String message, String type,
-                                           Don donation, StripePayment stripePayment) {
+    private void createAndSendNotification(String message, String type, Don donation, StripePayment stripePayment) {
         Notification notification = new Notification();
         notification.setMessage(message);
         notification.setType(type);
@@ -74,6 +86,10 @@ public class NotificationService implements INotificationService {
         }
 
         messagingTemplate.convertAndSend("/topic/notifications", payload);
+    }
+
+    private boolean notificationExists(String message, String type, Long donId) {
+        return notificationRepository.existsByMessageAndTypeAndDonation_IdDon(message, type, donId);
     }
 
     @Override
