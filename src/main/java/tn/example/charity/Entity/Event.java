@@ -30,6 +30,7 @@ public class Event {
     private Double temperature;
     private Double latitude;
     private Double longitude;
+
     private String photoEvent;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
