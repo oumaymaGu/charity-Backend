@@ -114,6 +114,9 @@ public class NotificationService implements INotificationService {
     @Override
     @Transactional
     public void deleteNotification(Long notificationId) {
-        notificationRepository.deleteById(notificationId);
+        if (notificationRepository.existsById(notificationId)) {
+            notificationRepository.deleteById(notificationId);
+        }
     }
+
 }
