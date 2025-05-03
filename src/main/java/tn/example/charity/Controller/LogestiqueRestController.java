@@ -51,13 +51,17 @@ public class LogestiqueRestController {
     public List<Logestique> findByRessourceName(@RequestParam String ressourceName) {
         return logestiqueService.retrievelogbyname(ressourceName);
     }
+
     @PostMapping("/{idlogestique}/assign-to-event/{idEvent}")
     public ResponseEntity<Logestique> assignLogToEvent(
             @PathVariable("idlogestique") Long idlogestique,
-            @PathVariable("idEvent") Long idEvent) {
-        return ResponseEntity.ok(logestiqueService.assignLogestiqueToEvent(idlogestique, idEvent));
-    }
+            @PathVariable("idEvent") Long idEvent,
+            @RequestParam float quantity) {
 
+        Logestique updatedLog = logestiqueService.assignLogestiqueToEventWithQuantity(idlogestique, idEvent, quantity);
+        return ResponseEntity.ok(updatedLog);
+
+    }
 
 
 }

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import tn.example.charity.Entity.Event;
 import tn.example.charity.Entity.Logestique;
 import tn.example.charity.Repository.EventRepository;
 import tn.example.charity.Repository.LogestiqueRepository;
@@ -58,4 +59,27 @@ public class LogestiqueServiceImpl implements  ILogestiqueService{
         logestique.setEvent(event);
         return logestiqueRepository.save(logestique);
     }
+
+    @Override
+    public Logestique assignLogestiqueToEventWithQuantity(Long idlogestique, Long idEvent, float quantity) {
+        Logestique log = logestiqueRepository.findById(idlogestique)
+                .orElseThrow(() -> new RuntimeException("Logistique non trouvée"));
+
+        Event event = eventRepository.findById(idEvent)
+                .orElseThrow(() -> new RuntimeException("Event non trouvé"));
+
+        if (log.getQuantity() < quantity) {
+            throw new RuntimeException("Quantité insuffisante pour l’assignation");
+        }
+
+        // Mise à jour de la quantité restante
+        log.setQuantity(log.getQuantity() - quantity);
+
+        // 🔴 Lien logique entre la logistique et l’événement
+        log.setEvent(event);
+
+        return logestiqueRepository.save(log);
+    }
+
+
 }

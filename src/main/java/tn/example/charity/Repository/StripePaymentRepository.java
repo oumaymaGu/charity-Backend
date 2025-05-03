@@ -7,5 +7,6 @@ import java.util.List;
 @Repository
 public interface StripePaymentRepository extends JpaRepository<StripePayment, Long> {
     List<StripePayment> findByDonIdDon(Long donId);
+
 }
 

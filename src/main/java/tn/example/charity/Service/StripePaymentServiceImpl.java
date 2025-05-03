@@ -16,7 +16,6 @@ import tn.example.charity.dto.StripePaymentRequest;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -25,6 +24,7 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
 
     private final StripePaymentRepository stripePaymentRepository;
     private final DonRepository donRepository;
+    private final NotificationService notificationService;
 
     static {
         Stripe.apiKey = "sk_test_51QwSi3GduHSrwvYo7AR4eR1xJUxwF2Va4sM8h4hQbOZmmPBgaLq8UR4w1J1UWxbbEYiox8FIiynYBN7OXAVqirTs00d9aYXRAN";
@@ -33,70 +33,85 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
     @Override
     public StripePayment createPaymentIntent(StripePaymentRequest request) throws StripeException {
         try {
-            // Si donId est null, créez un nouveau don automatiquement
-            Don don;
-            if (request.getDonId() == null) {
-                don = new Don();
-                don.setDateDon(new Date());
-                don.setAmount(request.getAmount());
-                don.setTypeDon(TypeDon.ARGENT); // Ou MATERIEL selon votre besoin
-                // Vous pouvez définir d'autres valeurs par défaut si nécessaire
-                don = donRepository.save(don);
-                log.info("Created new Don with ID: {}", don.getIdDon());
-            } else {
-                Optional<Don> donOptional = donRepository.findById(request.getDonId());
-                don = donOptional.orElseThrow(() ->
-                        new IllegalArgumentException("Don not found with ID: " + request.getDonId()));
-            }
-
-            PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                    .setAmount(request.getAmountInCents())
-                    .setCurrency(request.getCurrency().toLowerCase())
-                    .setDescription(request.getDescription())
-                    .setReceiptEmail(request.getEmail())
-                    .putMetadata("donId", String.valueOf(don.getIdDon()))
-                    .setAutomaticPaymentMethods(
-                            PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
-                                    .setEnabled(true)
-                                    .build()
-                    )
-                    .build();
-
-            PaymentIntent paymentIntent = PaymentIntent.create(params);
-            return savePayment(paymentIntent, request, don);
+            log.info("Reçu - Montant : {} (vérifier si en euros ou centimes)", request.getAmount());
+            Don don = handleDonAssociation(request);
+            PaymentIntent paymentIntent = createStripePaymentIntent(request, don);
+            StripePayment savedPayment = savePayment(paymentIntent, request, don);
+            log.info("Paiement sauvegardé - Montant : {} EUR", savedPayment.getAmount());
+            notificationService.createAndSendStripeNotification(savedPayment);
+            return savedPayment;
         } catch (StripeException e) {
-            log.error("Stripe error: {}", e.getMessage());
+            log.error("Erreur Stripe : {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Unexpected error: {}", e.getMessage());
-            throw new RuntimeException("Payment processing failed", e);
+            log.error("Erreur inattendue : {}", e.getMessage());
+            throw new RuntimeException("Échec du traitement du paiement", e);
         }
     }
 
+    private Don handleDonAssociation(StripePaymentRequest request) {
+        // Convertir le montant en euros si nécessaire
+        double amountInEuros = request.getAmount();
+        if (amountInEuros > 1000) { // Si le montant est trop grand, il est probablement en centimes
+            amountInEuros = amountInEuros / 100.0;
+            log.info("Montant converti de centimes à euros : {} -> {} EUR", request.getAmount(), amountInEuros);
+        }
+
+        if (request.getDonId() == null) {
+            Don newDon = new Don();
+            newDon.setDateDon(new Date());
+            newDon.setAmount(amountInEuros); // En euros
+            newDon.setTypeDon(TypeDon.ARGENT);
+            return donRepository.save(newDon);
+        } else {
+            return donRepository.findById(request.getDonId())
+                    .orElseThrow(() -> new IllegalArgumentException("Don non trouvé avec l'ID : " + request.getDonId()));
+        }
+    }
+
+    private PaymentIntent createStripePaymentIntent(StripePaymentRequest request, Don don) throws StripeException {
+        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+                .setAmount(request.getAmountInCents()) // Utiliser getAmountInCents() pour Stripe
+                .setCurrency(request.getCurrency().toLowerCase())
+                .setDescription(request.getDescription())
+                .setReceiptEmail(request.getEmail())
+                .putMetadata("donId", String.valueOf(don.getIdDon()))
+                .setAutomaticPaymentMethods(
+                        PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
+                                .setEnabled(true)
+                                .build()
+                )
+                .build();
+        return PaymentIntent.create(params);
+    }
+
     public StripePayment savePayment(PaymentIntent paymentIntent, StripePaymentRequest request, Don don) {
+        // Convertir le montant en euros si nécessaire
+        double amountInEuros = request.getAmount();
+        if (amountInEuros > 1000) { // Si le montant est trop grand, il est probablement en centimes
+            amountInEuros = amountInEuros / 100.0;
+            log.info("Montant converti de centimes à euros pour sauvegarde : {} -> {} EUR", request.getAmount(), amountInEuros);
+        }
+
         StripePayment payment = new StripePayment();
         payment.setPaymentIntentId(paymentIntent.getId());
         payment.setClientSecret(paymentIntent.getClientSecret());
-        payment.setAmount(request.getAmount());
+        payment.setAmount(amountInEuros); // En euros
         payment.setCurrency(request.getCurrency());
         payment.setStatus(paymentIntent.getStatus());
         payment.setEmail(request.getEmail());
         payment.setDescription(request.getDescription());
         payment.setDon(don);
-
         return stripePaymentRepository.save(payment);
     }
-
-    // ... autres méthodes inchangées ...
-
 
     @Override
     public List<StripePayment> getPaymentsByDonId(Long donId) {
         try {
             return stripePaymentRepository.findByDonIdDon(donId);
         } catch (Exception e) {
-            log.error("Error retrieving payments for donId {}: {}", donId, e.getMessage());
-            throw new RuntimeException("Failed to retrieve payments", e);
+            log.error("Erreur lors de la récupération des paiements pour donId {} : {}", donId, e.getMessage());
+            throw new RuntimeException("Échec de la récupération des paiements", e);
         }
     }
 
@@ -105,8 +120,8 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
         try {
             return stripePaymentRepository.findAll();
         } catch (Exception e) {
-            log.error("Error retrieving all payments: {}", e.getMessage());
-            throw new RuntimeException("Failed to retrieve payments", e);
+            log.error("Erreur lors de la récupération de tous les paiements : {}", e.getMessage());
+            throw new RuntimeException("Échec de la récupération des paiements", e);
         }
     }
 
@@ -114,10 +129,10 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
     public StripePayment getStripePaymentById(Long id) {
         try {
             return stripePaymentRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + id));
+                    .orElseThrow(() -> new RuntimeException("Paiement non trouvé avec l'ID : " + id));
         } catch (Exception e) {
-            log.error("Error retrieving payment with ID {}: {}", id, e.getMessage());
-            throw new RuntimeException("Failed to retrieve payment", e);
+            log.error("Erreur lors de la récupération du paiement avec l'ID {} : {}", id, e.getMessage());
+            throw new RuntimeException("Échec de la récupération du paiement", e);
         }
     }
 
@@ -128,8 +143,8 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
             payment.setStatus(status);
             return stripePaymentRepository.save(payment);
         } catch (Exception e) {
-            log.error("Error updating payment status for ID {}: {}", id, e.getMessage());
-            throw new RuntimeException("Failed to update payment status", e);
+            log.error("Erreur lors de la mise à jour du statut du paiement pour l'ID {} : {}", id, e.getMessage());
+            throw new RuntimeException("Échec de la mise à jour du statut du paiement", e);
         }
     }
 
@@ -138,8 +153,18 @@ public class StripePaymentServiceImpl implements IStripePaymentService {
         try {
             stripePaymentRepository.deleteById(id);
         } catch (Exception e) {
-            log.error("Error deleting payment with ID {}: {}", id, e.getMessage());
-            throw new RuntimeException("Failed to delete payment", e);
+            log.error("Erreur lors de la suppression du paiement avec l'ID {} : {}", id, e.getMessage());
+            throw new RuntimeException("Échec de la suppression du paiement", e);
         }
+    }
+
+    @Override
+    public List<StripePayment> getAllPayment() {
+        return stripePaymentRepository.findAll();
+    }
+
+    @Override
+    public PaymentIntent retrievePaymentIntent(String paymentIntentId) throws StripeException {
+        return PaymentIntent.retrieve(paymentIntentId);
     }
 }
