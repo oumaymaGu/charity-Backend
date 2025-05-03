@@ -3,24 +3,23 @@ package tn.example.charity.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
-import tn.example.charity.Entity.Location;
+import tn.example.charity.Entity.DeliveryLocation;
+import tn.example.charity.Service.LivraisonServiceImpl;
 
 @Controller
 public class WebSocketController {
 
-    private final SimpMessagingTemplate messagingTemplate;
-
     @Autowired
-    public WebSocketController(SimpMessagingTemplate messagingTemplate) {
-        this.messagingTemplate = messagingTemplate;
-    }
+    private LivraisonServiceImpl livraisonService;
 
-    // Méthode pour envoyer la location aux clients abonnés
-    @MessageMapping("/location")
-    public void sendLocation(Location location) {
-        // Envoie de la location à tous les abonnés de "/topic/location"
-        messagingTemplate.convertAndSend("/topic/location", location);
+    @MessageMapping("/updateLocation")
+    public void updateLocation(@Payload DeliveryLocation location) {
+        livraisonService.updateDriverLocation(
+                location.getLivraisonId(),
+                location.getLatitude(),
+                location.getLongitude()
+        );
     }
 }

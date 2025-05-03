@@ -2,9 +2,10 @@ package tn.example.charity.Entity;
 
 public class TranslationRequest {
     private String text;
-    private String target;
+    private String targetLang;
 
-    // Getters et Setters
+    // Constructor, getters and setters
+
     public String getText() {
         return text;
     }
@@ -13,12 +14,12 @@ public class TranslationRequest {
         this.text = text;
     }
 
-    public String getTarget() {
-        return target;
+    public String getTargetLang() {
+        return targetLang;
     }
 
-    public void setTarget(String target) {
-        this.target = target;
+    public void setTargetLang(String targetLang) {
+        this.targetLang = targetLang;
     }
 }
 

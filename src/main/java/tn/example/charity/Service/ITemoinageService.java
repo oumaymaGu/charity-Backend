@@ -1,6 +1,8 @@
 package tn.example.charity.Service;
 
 import tn.example.charity.Entity.Temoinage;
+import tn.example.charity.Entity.TemoinageStatut;
+
 import java.util.List;
 
 public interface ITemoinageService {
@@ -9,4 +11,6 @@ public interface ITemoinageService {
     Temoinage modifyTemoinage(Temoinage temoinage);
     List<Temoinage> getAllTemoinages();
     Temoinage getTemoinageById(Long idTemoin);
+
+    List<Temoinage> getTemoinagesByStatut(TemoinageStatut temoinageStatut);
 }

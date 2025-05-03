@@ -20,18 +20,13 @@ public class TranslationController {
     @Autowired
     private TranslationService translationService;
 
-    @PostMapping
-    public String translate(@RequestBody Map<String, String> request) {
-        System.out.println("Requête reçue : " + request);
-        String text = request.get("text");
-        String targetLang = request.get("targetLang");
-        System.out.println("Texte : " + text + " | Langue cible : " + targetLang);
-        return translationService.translate(text, targetLang);
-    }
-    public void testTranslation() {
-        String result = translationService.translate("Bonjour tout le monde", "en");
-        System.out.println("Résultat traduit : " + result);
+    public TranslationController(TranslationService translationService) {
+        this.translationService = translationService;
     }
 
-
-}
+    @GetMapping
+    public String translate(@RequestParam String word,
+                            @RequestParam(defaultValue = "fr") String source,
+                            @RequestParam(defaultValue = "en") String target) {
+        return translationService.translate(word, source, target);
+    } }

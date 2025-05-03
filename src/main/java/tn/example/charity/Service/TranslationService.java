@@ -1,73 +1,43 @@
 package tn.example.charity.Service;
-
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.util.EntityUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 @Service
 public class TranslationService {
 
-    public String translate(String text, String targetLang) {
-        String apiUrl = "https://libretranslate.com/translate";
-        String translatedText = "";
+    public String translate(String text, String source, String target) {
+        String jsonInput = String.format(
+                "{\"q\":\"%s\",\"source\":\"%s\",\"target\":\"%s\",\"format\":\"text\"}",
+                text, source, target
+        );
 
-        // Configuration des timeouts
-        RequestConfig config = RequestConfig.custom()
-                .setConnectTimeout(5000)
-                .setConnectionRequestTimeout(5000)
-                .setSocketTimeout(5000)
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://translate.argosopentech.com/translate"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonInput))
                 .build();
+        System.out.println(request);
+        System.out.println(jsonInput);
+        System.out.println(HttpResponse.BodyHandlers.ofString().toString());
+        HttpClient client = HttpClient.newHttpClient();
+        try {
 
-        try (CloseableHttpClient client = HttpClients.custom()
-                .setDefaultRequestConfig(config)
-                .build()) {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            HttpPost post = new HttpPost(apiUrl);
 
-            JSONObject requestBody = new JSONObject();
-            requestBody.put("q", text);
-            requestBody.put("source", "fr");
-            requestBody.put("target", targetLang);
-            requestBody.put("format", "text");
+            String json = response.body();
+            int start = json.indexOf(":\"") + 2;
+            int end = json.indexOf("\"}", start);
+            return json.substring(start, end);
 
-            // Afficher la requête envoyée pour débogage
-            System.out.println("Requête envoyée : " + requestBody.toString());
-            post.setEntity(new StringEntity(requestBody.toString(), "UTF-8"));
-            post.setHeader("Content-Type", "application/json");
+        } catch (Exception e) {
+            e.printStackTrace(); // Affiche la vraie cause dans la console
 
-            HttpResponse response = client.execute(post);
-            HttpEntity responseEntity = response.getEntity();
-
-            if (responseEntity != null) {
-                String result = EntityUtils.toString(responseEntity);
-
-                // Afficher la réponse brute pour débogage
-                System.out.println("=== RAW RESPONSE ===");
-                System.out.println(result);
-
-                // Extraire le texte traduit de la réponse
-                JSONObject json = new JSONObject(result);
-                if (json.has("translatedText")) {
-                    translatedText = json.getString("translatedText");
-                } else {
-                    translatedText = "[Aucune traduction reçue]";
-                }
-            }
-
-        } catch (IOException e) {
-            System.err.println("Erreur lors de la requête HTTP vers l'API :");
-            e.printStackTrace();
+            return "Erreur : " + e.getClass().getSimpleName();
         }
 
-        System.out.println("Texte traduit reçu : " + translatedText);
-        return translatedText;
     }
 }

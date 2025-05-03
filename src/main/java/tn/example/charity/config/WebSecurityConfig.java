@@ -17,6 +17,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import org.springframework.security.web.firewall.HttpFirewall;
+import org.springframework.security.web.firewall.StrictHttpFirewall;
 import tn.example.charity.Security.AuthEntryPointJwt;
 import tn.example.charity.Security.AuthTokenFilter;
 import tn.example.charity.Service.UserDetailsServiceImpl;
@@ -77,5 +79,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+	}
+	private HttpFirewall allowUrlEncodedSlashHttpFirewall() {
+		StrictHttpFirewall firewall = new StrictHttpFirewall();
+		firewall.setAllowUrlEncodedSlash(true); // Permet les doubles slashes dans les URLs
+		return firewall;
 	}
 }

@@ -1,5 +1,5 @@
 package tn.example.charity.Entity;
 
 public enum EtatLivraisons {
-    ENCOURS , LIVREE , ANNULEE
+    ENCOURS , LIVREE , ANNULEE,PENDING
 }

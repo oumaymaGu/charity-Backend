@@ -1,6 +1,7 @@
 package tn.example.charity.Entity;
 
 import javax.persistence.*;
+
 import lombok.*;
 
 import java.util.Date;
@@ -19,6 +20,11 @@ public class Livraisons {
     private String adresseLivr;
     private Date dateLivraison;
     private String emailClient;
+    @Lob
+    private String signatureImage;
+    private String pinCode;
     @Enumerated(EnumType.STRING)
-    private EtatLivraisons  etatLivraisons;
+    private EtatLivraisons etatLivraisons;
+    private boolean trackingEnabled;
+
 }
