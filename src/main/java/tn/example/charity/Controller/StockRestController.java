@@ -46,4 +46,10 @@ public class StockRestController {
         List<Stock> stocks = stockService.getAllStock();
         return stocks;
     }
+
+    @PutMapping("/affecter-association/{idStock}/{idAss}")
+    public Stock affecterAssociationAStock(@PathVariable Long idStock, @PathVariable Long idAss) {
+        return stockService.affecterAssociationAStock(idStock, idAss);
+    }
+
 }

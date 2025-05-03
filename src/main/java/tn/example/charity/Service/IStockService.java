@@ -10,4 +10,6 @@ public interface IStockService {
     void deleteStock(Long idStock);
     Stock getStockById(Long idStock);
     List<Stock> getAllStock();
+    Stock affecterAssociationAStock(Long idStock, Long idAss);
+
 }

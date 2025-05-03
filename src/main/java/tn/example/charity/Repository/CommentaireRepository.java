@@ -8,6 +8,7 @@ import java.util.List;
 
 @Repository
 public interface CommentaireRepository extends JpaRepository<Commentaire, Long> {
-    List<Commentaire> findByAssociationIdAssOrderByDateCreationDesc(Long idAss);
+    List<Commentaire> findByAssociationIdAssAndParentIsNullOrderByDateCreationDesc(Long idAss);
+
 }
 

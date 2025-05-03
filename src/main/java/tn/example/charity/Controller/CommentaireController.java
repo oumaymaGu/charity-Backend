@@ -53,4 +53,33 @@ public class CommentaireController {
         List<Commentaire> commentaires = commentaireService.getCommentaires(associationId);
         return ResponseEntity.ok(commentaires);
     }
+
+    @PostMapping("/{commentaireId}/like")
+    public ResponseEntity<?> likeCommentaire(@PathVariable Long commentaireId) {
+        Commentaire commentaire = commentaireService.likeCommentaire(commentaireId);
+        return ResponseEntity.ok(commentaire);
+    }
+
+    @PostMapping("/{commentaireId}/repondre")
+    public ResponseEntity<?> ajouterReponse(
+            @PathVariable Long commentaireId,
+            @RequestBody CommentaireMessage request,
+            Principal principal
+    ) {
+        if (principal == null) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Utilisateur non authentifié");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        Commentaire reponse = commentaireService.ajouterReponse(
+                principal.getName(),
+                commentaireId,
+                request.getContenu()
+        );
+
+        return ResponseEntity.ok(reponse);
+    }
+
+
 }

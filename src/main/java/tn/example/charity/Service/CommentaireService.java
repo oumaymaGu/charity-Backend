@@ -44,6 +44,30 @@ public class CommentaireService {
     }
 
     public List<Commentaire> getCommentaires(Long idAss) {
-        return commentaireRepository.findByAssociationIdAssOrderByDateCreationDesc(idAss);
+        return commentaireRepository.findByAssociationIdAssAndParentIsNullOrderByDateCreationDesc(idAss);
+    }
+
+    public Commentaire ajouterReponse(String email, Long parentId, String contenu) {
+        User user = userRepository.findByUsername(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        Commentaire parent = commentaireRepository.findById(parentId)
+                .orElseThrow(() -> new RuntimeException("Commentaire parent non trouvé"));
+
+        Commentaire reponse = new Commentaire();
+        reponse.setUser(user);
+        reponse.setParent(parent);
+        reponse.setAssociation(parent.getAssociation());
+        reponse.setContenu(contenu);
+        reponse.setDateCreation(LocalDateTime.now());
+
+        return commentaireRepository.save(reponse);
+    }
+
+
+    public Commentaire likeCommentaire(Long id) {
+        Commentaire c = commentaireRepository.findById(id).orElseThrow();
+        c.setLikes(c.getLikes() + 1);
+        return commentaireRepository.save(c);
     }
 }
