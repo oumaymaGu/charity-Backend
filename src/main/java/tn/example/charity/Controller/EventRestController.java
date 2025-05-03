@@ -9,7 +9,7 @@ import tn.example.charity.Entity.Event;
 import tn.example.charity.Entity.User;
 import tn.example.charity.Repository.EventRepository;
 import tn.example.charity.Service.IEventService;
-import tn.example.charity.dto.BilletDTO; // ⚠️ Assure-toi d’avoir ce DTO dans ce package
+import tn.example.charity.dto.BilletDTO;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -82,7 +82,7 @@ public class EventRestController {
     public List<Event> getEventsNear(
             @RequestParam double latitude,
             @RequestParam double longitude,
-            @RequestParam(defaultValue = "50") double radius) {
+            @RequestParam(defaultValue = "70") double radius) {
         return eventService.getEventsNear(latitude, longitude, radius);
     }
 

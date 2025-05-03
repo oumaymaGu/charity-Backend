@@ -9,7 +9,7 @@ import tn.example.charity.Service.INotificationService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/notifications")
 @CrossOrigin(origins = "http://localhost:4200")
 @AllArgsConstructor
 public class NotificationRestController {
