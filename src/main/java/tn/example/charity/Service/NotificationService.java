@@ -32,7 +32,9 @@ public class NotificationService implements INotificationService {
             if (notificationExists(message, "DON_MATERIEL", donation.getIdDon())) {
                 System.out.println("Notification déjà existante pour Don ID: " + donation.getIdDon());
                 return;
+
             }
+
 
             createAndSendNotification(message, "DON_MATERIEL", donation, null);
 
@@ -118,5 +120,4 @@ public class NotificationService implements INotificationService {
             notificationRepository.deleteById(notificationId);
         }
     }
-
 }
