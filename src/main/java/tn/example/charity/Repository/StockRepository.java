@@ -13,4 +13,6 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
 
     Optional<Stock> findByTypeStockAndLieuAndAssociations(String typeStock, String lieu, Associations associations);
 
+
+
 }
