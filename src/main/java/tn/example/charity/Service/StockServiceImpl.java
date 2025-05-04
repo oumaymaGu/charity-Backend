@@ -9,6 +9,7 @@ import tn.example.charity.Repository.StockRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -18,10 +19,33 @@ public class StockServiceImpl implements IStockService {
 
     @Override
     public Stock addStock(Stock stock) {
-        stock.setDateCreation(LocalDateTime.now()); // mettre la date de création automatiquement
-        stock.setCapaciteDisponible(stock.getCapaciteTotale()); // au début, toute la capacité est disponible
+        stock.setDateCreation(LocalDateTime.now());
+
+        // S'assurer que l'association est bien récupérée depuis la DB
+        if (stock.getAssociations() != null && stock.getAssociations().getIdAss() != 0) {
+            Associations assoc = associationsRepository.findById(stock.getAssociations().getIdAss())
+                    .orElseThrow(() -> new IllegalArgumentException("Association non trouvée"));
+            stock.setAssociations(assoc);
+
+            // Vérifie s'il existe déjà un stock avec même type + lieu + association
+            Optional<Stock> existingStockOpt = stockRepository.findByTypeStockAndLieuAndAssociations(
+                    stock.getTypeStock(), stock.getLieu(), assoc
+            );
+
+            if (existingStockOpt.isPresent()) {
+                Stock existingStock = existingStockOpt.get();
+                existingStock.setCapaciteTotale(existingStock.getCapaciteTotale() + stock.getCapaciteTotale());
+                existingStock.setCapaciteDisponible(existingStock.getCapaciteDisponible() + stock.getCapaciteTotale());
+                return stockRepository.save(existingStock);
+            }
+        }
+
+        // Sinon, c’est un nouveau stock
+        stock.setCapaciteDisponible(stock.getCapaciteTotale());
         return stockRepository.save(stock);
     }
+
+
 
 
     @Override
@@ -58,5 +82,7 @@ public class StockServiceImpl implements IStockService {
         stock.setAssociations(association);
         return stockRepository.save(stock);
     }
+
+
 
 }

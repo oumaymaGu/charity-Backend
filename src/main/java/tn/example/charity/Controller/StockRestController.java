@@ -52,4 +52,6 @@ public class StockRestController {
         return stockService.affecterAssociationAStock(idStock, idAss);
     }
 
+
+
 }

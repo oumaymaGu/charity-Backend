@@ -2,6 +2,8 @@ package tn.example.charity.Entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -21,7 +23,8 @@ public class Stock {
     private LocalDateTime dateCreation;
     private String typeStock;
     private String lieu;
-    @ManyToOne
-    @JsonIgnore
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnoreProperties("stocks")
     private Associations associations;
 }
