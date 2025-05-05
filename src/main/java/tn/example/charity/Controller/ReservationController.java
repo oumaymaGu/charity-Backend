@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/reservations")
-@CrossOrigin(origins = "*") // Or specify your Angular app's URL
+@CrossOrigin(origins = "http://localhost:4200")// Or specify your Angular app's URL
 public class ReservationController {
 
     @Autowired

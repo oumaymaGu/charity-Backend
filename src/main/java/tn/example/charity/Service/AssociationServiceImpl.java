@@ -2,10 +2,14 @@ package tn.example.charity.Service;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import tn.example.charity.Entity.Associations;
 import tn.example.charity.Repository.AssociationsRepository;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
+
 @Service
 @AllArgsConstructor
 public class AssociationServiceImpl implements IAssociationService {

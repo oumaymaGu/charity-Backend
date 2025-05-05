@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import tn.example.charity.Entity.Event;
 import tn.example.charity.Entity.URole;
 import tn.example.charity.Entity.User;
+import tn.example.charity.Repository.EventRepository;
 import tn.example.charity.Repository.UserRepository;
 
 import java.util.List;
@@ -21,6 +23,7 @@ public class UserServiceImpl implements IUserService{
 
     PasswordEncoder passwordEncoder;
     UserRepository userRepository;
+    EventRepository eventRepository;
 
     @Override
     public User addUser(User user) {
@@ -67,8 +70,37 @@ public class UserServiceImpl implements IUserService{
         return u;
     }
 
+    @Override
+
+    public User affecterUserToEvent(Long idUser, Long eventId) {
+        User user = userRepository.findById(idUser).get();
+        Event event = eventRepository.findById(eventId).get();
+        user.getEvents().add(event);
+        return userRepository.save(user);
+    }
 
     public User findByResetToken(String resetToken) {
         return userRepository.findByResetToken(resetToken);
     }
+
+    @Override
+    public User getUserIdByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public User deaffecterUserFromEventByEmail(Long eventId, String email) {
+        User user = userRepository.findByEmail(email);
+        Event event = eventRepository.findById(eventId).get();
+        if (user.getEvents().contains(event)) {
+            user.getEvents().remove(event);
+            return userRepository.save(user);
+        } else {
+            // Si l'utilisateur n'est pas associé à l'événement, tu peux retourner une erreur ou un message
+            throw new RuntimeException("L'utilisateur n'est pas associé à cet événement.");
+        }
+
+    }
+
+
 }

@@ -23,11 +23,18 @@ public class Associations {
     private String contact;
     private String email;
     private String description;
+    private String photoUrl;
+
+
+
     @OneToMany(mappedBy = "association",cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Event> events;
     @OneToMany (mappedBy = "associations",cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Stock> stocks;
+
+    public Associations(String nomAss, String lieu, String date, String contact, String email, String description, String imageUrl) {
+    }
 }
 

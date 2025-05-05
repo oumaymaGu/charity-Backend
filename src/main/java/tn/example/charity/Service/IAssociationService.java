@@ -3,6 +3,7 @@ package tn.example.charity.Service;
 import tn.example.charity.Entity.Associations;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IAssociationService {
     Associations addAssociations(Associations associations);
@@ -10,5 +11,7 @@ public interface IAssociationService {
     void deleteAssociations(Long idAss);
     Associations getAssociationsById(Long idAss);
     List<Associations> getAllAssociations();
+
+
 
 }

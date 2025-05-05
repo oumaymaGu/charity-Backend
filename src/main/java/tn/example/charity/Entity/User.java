@@ -1,14 +1,19 @@
 package tn.example.charity.Entity;
 
-import javax.persistence.*;
-import javax.validation.constraints.Email;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.*;
+
+import javax.persistence.*;
+import javax.validation.constraints.Email;
 import lombok.*;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+@Getter
+@Setter
 
 @Entity
 @Data
@@ -21,6 +26,7 @@ public class User {
     private Long idUser;
     private String username;
     private String password;
+
     @Email
     private String email;
     @Lob
@@ -47,9 +53,6 @@ public class User {
     @ManyToMany
     private List<Temoinage>temoinages;
 
-
-
-
     public User() {
     }
 
@@ -58,4 +61,13 @@ public class User {
         this.email = email;
         this.password = password;
     }
+    @ManyToMany
+    @JoinTable(
+            name = "user_event",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "event_id")
+    )
+    @JsonIgnore
+    private Set<Event> events = new HashSet<>();
 }
+

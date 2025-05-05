@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.Optional;
+
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @AllArgsConstructor
@@ -177,14 +177,21 @@ public class UserRestController {
         String username = authentication.getName();
         return String.format("Hello %s! This route is accessible by both ADMIN and USER.", username);
     }
-    @GetMapping("/username/{username}")
-    public ResponseEntity<Long> getUserIdByUsername(@PathVariable String username) {
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isPresent()) {
-            return ResponseEntity.ok(user.get().getIdUser());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @PutMapping("/affecter-user-to-event/{User-id}/{Event-id}")
+    public User assignUserToEvent(@PathVariable("User-id") Long UserId,
+                                  @PathVariable("Event-id") Long EventId) throws Exception {
+        return userService.affecterUserToEvent(UserId, EventId);
     }
+    @DeleteMapping("/deaffecter-user-from-event/{email}/{event-id}")
+    public User deassignUserFromEvent(@PathVariable("email") String email,
+                                      @PathVariable("event-id") Long eventId) {
+        return userService.deaffecterUserFromEventByEmail(eventId, email);
     }
+
+    @GetMapping("/getUserIdByEmail")
+    public ResponseEntity<Long> getUserIdByEmail(@RequestParam String email) {
+        Long userId = userService.getUserIdByEmail(email).getIdUser();
+        return ResponseEntity.ok(userId);
+    }
+}
 

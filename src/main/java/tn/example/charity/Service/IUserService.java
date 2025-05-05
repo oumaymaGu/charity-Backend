@@ -17,6 +17,9 @@ public interface IUserService {
     List<User> retreiveallUser(User User);
     User retrieveallUserbyid(Long idUser);
     User CreateForReset(User u);
+    User affecterUserToEvent(Long idUser, Long eventId);
 
     User findByResetToken(String resetToken);
+    User getUserIdByEmail (String email);
+    User deaffecterUserFromEventByEmail (Long eventId, String email);
 }

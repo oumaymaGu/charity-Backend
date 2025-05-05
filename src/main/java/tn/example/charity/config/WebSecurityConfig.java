@@ -61,6 +61,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return new BCryptPasswordEncoder();
 	}
 
+
+
+
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.cors().and().csrf().disable()
@@ -69,9 +73,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.authorizeHttpRequests(auth -> auth
 						.antMatchers("/api/auth/**").permitAll()
 						.antMatchers("/**/**/**").permitAll()
-
 						.anyRequest().authenticated()
 				);
+
 		http.sessionManagement()
         .maximumSessions(1) // Configurez le nombre maximal de sessions par utilisateur selon vos besoins
         .sessionRegistry(sessionRegistry()); // Assurez-vous de référencer le bean SessionRegistry dans votre configuration
