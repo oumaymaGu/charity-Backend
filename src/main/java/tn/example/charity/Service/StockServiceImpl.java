@@ -53,8 +53,11 @@ public class StockServiceImpl implements IStockService {
         if (stock.getCapaciteDisponible() > stock.getCapaciteTotale()) {
             throw new IllegalArgumentException("La capacité disponible ne peut pas dépasser la capacité totale !");
         }
-        return stockRepository.save(stock);
+        Stock updated = stockRepository.save(stock);
+        verifierEtAlerterStock(updated);
+        return updated;
     }
+
 
 
     public void deleteStock(Long idStock) {
@@ -81,6 +84,26 @@ public class StockServiceImpl implements IStockService {
 
         stock.setAssociations(association);
         return stockRepository.save(stock);
+    }
+
+    private void verifierEtAlerterStock(Stock stock) {
+        double seuil = 0.1; // 10% de seuil critique
+
+        double tauxDispo = (double) stock.getCapaciteDisponible() / stock.getCapaciteTotale();
+        if (tauxDispo < seuil && !stock.isAlerteEnvoyee()) {
+            // LOG ou envoi de notification ici
+            System.out.println("⚠️ Stock critique pour le stock ID: " + stock.getIdStock());
+
+            // (Optionnel) Envoie email ou crée une notification dans une table Notification
+
+            stock.setAlerteEnvoyee(true);
+            stock.setDerniereAlerte(LocalDateTime.now());
+            stockRepository.save(stock);
+        } else if (tauxDispo >= seuil && stock.isAlerteEnvoyee()) {
+            // Stock rechargé => on reset l'alerte
+            stock.setAlerteEnvoyee(false);
+            stockRepository.save(stock);
+        }
     }
 
 

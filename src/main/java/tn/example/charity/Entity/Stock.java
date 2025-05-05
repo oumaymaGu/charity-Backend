@@ -23,6 +23,9 @@ public class Stock {
     private LocalDateTime dateCreation;
     private String typeStock;
     private String lieu;
+    private boolean alerteEnvoyee = false;
+    private LocalDateTime derniereAlerte;
+
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnoreProperties("stocks")
