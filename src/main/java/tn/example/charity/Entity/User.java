@@ -2,6 +2,8 @@ package tn.example.charity.Entity;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.util.HashSet;
@@ -44,6 +46,9 @@ public class User {
     private Associations associations;
     @ManyToMany
     private List<Temoinage>temoinages;
+
+
+
 
     public User() {
     }

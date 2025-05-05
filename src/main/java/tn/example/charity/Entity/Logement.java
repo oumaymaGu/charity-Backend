@@ -23,4 +23,6 @@ public class Logement {
     @OneToOne
     @JsonIgnore
     private Refuge refuge;
+
+
 }

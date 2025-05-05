@@ -1,7 +1,5 @@
 package tn.example.charity.Controller;
 
-
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -36,15 +34,15 @@ public class NotificationRefugeController {
     @PostMapping("/send")
     public void send(@RequestBody String message) {
         NotificationRefuge saved = notificationRefugeService.save(message);
-        sendToClients(saved.getMessage());
+        sendToClients(saved);
     }
 
-    private void sendToClients(String message) {
+    private void sendToClients(NotificationRefuge notification) {
         for (SseEmitter emitter : emitters) {
             try {
                 emitter.send(SseEmitter.event()
                         .name("notificationrefuge")
-                        .data(message));
+                        .data(notification));
             } catch (IOException e) {
                 emitter.complete();
                 emitters.remove(emitter);
