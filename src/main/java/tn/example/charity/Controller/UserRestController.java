@@ -177,6 +177,21 @@ public class UserRestController {
         String username = authentication.getName();
         return String.format("Hello %s! This route is accessible by both ADMIN and USER.", username);
     }
-
+    @PutMapping("/affecter-user-to-event/{User-id}/{Event-id}")
+    public User assignUserToEvent(@PathVariable("User-id") Long UserId,
+                                  @PathVariable("Event-id") Long EventId) throws Exception {
+        return userService.affecterUserToEvent(UserId, EventId);
     }
+    @DeleteMapping("/deaffecter-user-from-event/{email}/{event-id}")
+    public User deassignUserFromEvent(@PathVariable("email") String email,
+                                      @PathVariable("event-id") Long eventId) {
+        return userService.deaffecterUserFromEventByEmail(eventId, email);
+    }
+
+    @GetMapping("/getUserIdByEmail")
+    public ResponseEntity<Long> getUserIdByEmail(@RequestParam String email) {
+        Long userId = userService.getUserIdByEmail(email).getIdUser();
+        return ResponseEntity.ok(userId);
+    }
+}
 

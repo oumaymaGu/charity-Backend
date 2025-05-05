@@ -8,7 +8,7 @@ import tn.example.charity.Entity.Refuge;
 import tn.example.charity.Service.ILogementService;
 
 import java.util.List;
-
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @AllArgsConstructor
 @RequestMapping("/logement")
@@ -47,6 +47,7 @@ public class LogementRestController {
         List<Logement> logements = logementService.getAllLogement();
         return logements;
     }
+
 
 
 
